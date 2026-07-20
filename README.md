@@ -1,1 +1,0 @@
-# Django_apl_for_bg
