@@ -1,5 +1,5 @@
 """
-ASGI config for apl_for_bg project.
+ASGI config for app_for_bg project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'apl_for_bg.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app_for_bg.settings')
 
 application = get_asgi_application()

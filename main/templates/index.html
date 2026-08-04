@@ -7,4 +7,11 @@
 <body>
     <h2>Application for budget</h2>
 </body>
+<form method="POST" novalidate>
+        {% csrf_token %}
+    <table>
+        {{ form }}
+    </table>
+    <input type="submit" value="Send" >
+</form>
 </html>
