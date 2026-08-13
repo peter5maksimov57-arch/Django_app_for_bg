@@ -4,6 +4,6 @@ from main import views
 
 urlpatterns = [
     path('', views.index),
-    re_path(r'^about', views.about),
+    re_path(r'^registration', views.registration),
     re_path(r'^contact', views.contact),
 ]
