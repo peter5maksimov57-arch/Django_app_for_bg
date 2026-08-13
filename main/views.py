@@ -1,14 +1,30 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.contrib.auth.hashers import make_password, check_password
 from main import forms
 from main import models
   
 def index(request):
     if request.method == "POST":
         userform = forms.UserForm(request.POST)
+
         if userform.is_valid():
-            name = userform.cleaned_data["name"]
-            return HttpResponse(f"<h2>Hello, {name}</h2>")
+            email = userform.cleaned_data["email"]
+            password = userform.cleaned_data["password"]
+
+            try:
+                user = models.Person.objects.get(email=email)
+
+                if check_password(password, user.password):
+                    return HttpResponse(f"<h2>Hello, {user.name}</h2>")
+                    """сделай приветвие и переход на главную страницу"""
+                else:
+                    return HttpResponse(f"<h2>Неверный пароль!")
+                """Сделай тож как виджет какой-то или ещё что-то, чтоб потом можно было ещё раз войти"""
+            except models.Person.DoesNotExist:
+                 return HttpResponse(f"<h2>Пользователь не найден!")
+            """Снова придумай что-то"""
+            
         else:
             return HttpResponse("Invalid data")
     else:
@@ -32,10 +48,11 @@ def registration(request):
             if models.Person.objects.filter(email=email).exists():
                 return HttpResponse(f"Пользователь с таким email уже есть")
             else:
+                hash_password = make_password(password)
                 user = models.Person(
                     email=email,
                     name=name,
-                    password=password,
+                    password=hash_password,
                     role='',
                     # age=age,
                     balance=0
