@@ -12,3 +12,7 @@ class RegForm(forms.Form):
     # age = forms.IntegerField(min_value=1)
     email = forms.EmailField()
     password = forms.CharField(min_length=6, max_length=20)
+
+
+class RegCode(forms.Form):
+    us_code = forms.CharField(min_length=6, max_length=6)
