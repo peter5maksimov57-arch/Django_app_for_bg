@@ -16,3 +16,11 @@ class RegForm(forms.Form):
 
 class RegCode(forms.Form):
     us_code = forms.CharField(min_length=6, max_length=6)
+
+
+class EmailForm(forms.Form):
+    email = forms.EmailField()
+
+class PasswordForm(forms.Form):
+    password = forms.CharField(min_length=6, max_length=20)
+    

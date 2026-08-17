@@ -2,10 +2,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 import random
 
-def send_registration_code(to_email):
-    subject = 'Код для регистрации в приложении'
+def send_code(to_email, subject):
+    # subject = 'Код для регистрации в приложении'
     message = random.randint(100000, 999999)
-    full_message = f"От App_for_bg. Код регистрации: {message}"
+    full_message = f"От App_for_bg. Код: {message}"
     
     send_mail(
         subject=subject,
@@ -17,3 +17,6 @@ def send_registration_code(to_email):
     )
 
     return message
+
+
+

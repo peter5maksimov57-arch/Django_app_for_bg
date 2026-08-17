@@ -54,11 +54,11 @@ def registration(request):
                 request.session['reg_password'] = password
                 # request.session['reg_balance'] = balance
                 
-                code = mail.send_registration_code(email)
+                code = mail.send_code(email, 'Код для регистрации в приложении')
                 request.session['verification_code'] = str(code)
                 return redirect('reg_code')
                 # user_code = forms.RegCode(request.POST)
-                # code = mail.send_registration_code(email)
+                # code = mail.send_code(email)
                 # if user_code.is_valid():
                 #     us_code = user_code.cleaned_data['us_code']
                 #     if us_code == code:
@@ -137,7 +137,7 @@ def reg_code(request):
             """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
             и переадресацию на экран входа (index)"""
         # user_code = forms.RegCode(request.POST)
-        # code = mail.send_registration_code(email)
+        # code = mail.send_code(email)
         # if user_code.is_valid():
         #     us_code = user_code.cleaned_data['us_code']
         #     if us_code == code:
@@ -166,4 +166,69 @@ def reg_code(request):
     else:
         return render(request, "reg_code.html")
     """Переделай файл, я занейронил, тут вылезает код еще сам по себе без почты"""
+
+
+def password_reset(request):
+    if request.method == "POST":
+        userform = forms.EmailForm(request.POST)
+        if userform.is_valid():
+            email = userform.cleaned_data['email']
+            if models.Person.objects.filter(email=email).exists():
+                request.session['res_email'] = email
+                code = mail.send_code(email, 'Код для сброса пароля')
+                request.session['reset_code'] = str(code)
+                return redirect('res_code')
+            else:
+                return HttpResponse("Нет такого пользователя")
+        else:
+            return HttpResponse("Invalid code")
+    else:
+            userform = forms.EmailForm()
+            return render(request, "index.html", {"form": userform})
+
+
+def res_code(request):
+    if 'res_email' not in request.session:
+        return HttpResponse("Сессия истекла")
+    """Чет добавь и переход на экран входа"""
+    if request.method == "POST":
+        user_code = request.POST.get('us_code', '').strip()
+            
+        expected_code = request.session.get('reset_code')
+            
+        if user_code == expected_code:
+            return redirect('new_pas')
+        else:
+            return HttpResponse("Invalid code")
+            """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
+            и пусть заново вводит"""
+    else:
+        return render(request, "reg_code.html")
+
+    
+def new_pas(request):
+    if 'res_email' not in request.session:
+        return HttpResponse("Сессия истекла")
+        """Чет добавь и переход на экран входа"""
+    if request.method == "POST":
+        userform = forms.PasswordForm(request.POST)
+        if userform.is_valid():
+            n_password = userform.cleaned_data['password']
+            email = request.session.get('res_email')
+            user = models.Person.objects.get(email=email)
+            hash_password = make_password(n_password)
+            user.password = hash_password
+            user.save()
+            request.session.flush()
+            return HttpResponse(f"Пароль изменён")
+            """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
+            и переадресацию на экран входа (index)"""
+        else:
+            return HttpResponse("Invalid data")
+        """Сделай по красоте"""
+
+    else:
+        userform = forms.PasswordForm()
+        return render(request, "index.html", {"form": userform})
+    """Сделай по красоте"""
     
