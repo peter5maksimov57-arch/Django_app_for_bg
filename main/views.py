@@ -45,6 +45,15 @@ def index(request):
     # return render(request, "index.html")
     # return HttpResponse("Apl_for_bg")
 
+
+def main_page(request):
+    if request.method == "POST":
+        pass
+    else:
+        pass
+        # return render(request, "index.html", {"form": userform})
+
+
 def registration(request):
     if request.method == "POST":
         userform = forms.RegForm(request.POST)
