@@ -17,7 +17,6 @@
         — Управление бюджетом
     </title>
     <link rel="stylesheet" href="{% static 'main/css/auth.css' %}">
-    <script src="{% static 'main/js/form-errors.js' %}" defer></script>
 </head>
 <body>
     <main class="auth-card">
@@ -34,7 +33,7 @@
         </h1>
         <p class="auth-card__subtitle">Управление бюджетом</p>
 
-        <form method="post" data-ajax-form data-form-kind="auth" novalidate>
+        <form method="post" novalidate>
             {% csrf_token %}
 
             {% for field in form %}
@@ -43,6 +42,8 @@
                     {{ field }}
                 </div>
             {% endfor %}
+
+            {% include "includes/form_errors.html" %}
 
             <button class="submit-button" type="submit">
                 {% if form.name %}
@@ -71,6 +72,5 @@
         </nav>
     </main>
 
-    {% include "includes/error_widget.html" %}
 </body>
 </html>
