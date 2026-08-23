@@ -23,4 +23,14 @@ class EmailForm(forms.Form):
 
 class PasswordForm(forms.Form):
     password = forms.CharField(min_length=6, max_length=20)
+
+
+class CreatTrForm(forms.Form):
+    # user_id = forms.IntegerField()
+    amount = forms.FloatField()
+    type_tr = forms.CharField()
+    # time = forms.DateTimeField()
+    category = forms.CharField()
+    res_or_sen = forms.CharField()
+    regullar = forms.BooleanField()
     

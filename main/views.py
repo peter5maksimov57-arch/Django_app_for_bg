@@ -17,6 +17,13 @@ def index(request):
                 user = models.Person.objects.get(email=email)
 
                 if check_password(password, user.password):
+                    request.session['email'] = email
+                    request.session['name'] = user.name
+                    # request.session['password'] = user.password
+                    request.session['balance'] = user.balance
+                    request.session['role'] = user.role
+                    request.session['user_id'] = user.id
+
                     return HttpResponse(f"<h2>Hello, {user.name}</h2>")
                     """сделай приветвие и переход на главную страницу"""
                 else:
@@ -226,6 +233,7 @@ def new_pas(request):
         """Чет добавь и переход на экран входа"""
     if request.method == "POST":
         userform = forms.PasswordForm(request.POST)
+    
         if userform.is_valid():
             n_password = userform.cleaned_data['password']
             email = request.session.get('res_email')
@@ -245,4 +253,61 @@ def new_pas(request):
         userform = forms.PasswordForm()
         return render(request, "index.html", {"form": userform})
     """Сделай по красоте"""
+
+
+def create_tr(request):
+    if 'user_id' not in request.session:
+        return HttpResponse("Сессия истекла")
     
+    if request.method == "POST":
+        userform = forms.CreatTrForm(request.POST)
+
+        if userform.is_valid():
+            user_id = request.session['user_id']
+
+            # email = userform.cleaned_data['email']
+            amount = userform.cleaned_data['amount']
+            type_tr = userform.cleaned_data['type_tr']
+            # time = forms.DateTimeField()
+            category = userform.cleaned_data['category']
+            res_or_sen = userform.cleaned_data['res_or_sen']
+            regullar = userform.cleaned_data['regullar']
+
+            if amount <= 0:
+                return HttpResponse(f"Транзакция должна быть больше 0")
+            """Добавь чёт"""
+
+            try:
+                transaction = models.Transaction.new_tr(
+                    user_id=user_id,
+                    amount=amount,
+                    type_tr=type_tr,
+                    category=category,
+                    res_or_sen=res_or_sen,
+                    regullar=regullar
+                )
+                
+                
+                user = models.Person.objects.get(id=user_id)
+                if type_tr == 'Поступление':
+                    user.balance = user.balance + amount
+                    user.save()
+                else:
+                    user.balance = user.balance - amount
+                    user.save()
+                
+                return HttpResponse(f"Транзакция добавлена")
+                """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
+                и переадресацию на экран входа (index)"""
+            
+            except Exception as e:
+                return HttpResponse(f"Ошибка {e}")
+            """Добавь чёт"""
+            
+        else:
+            return render(request, "index.html", {"form": userform})
+            """Сделай по красоте""" 
+    else:
+        userform = forms.CreatTrForm()
+        return render(request, "index.html", {"form": userform})
+        """Сделай по красоте"""

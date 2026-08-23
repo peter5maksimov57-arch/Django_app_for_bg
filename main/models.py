@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
  
 class Person(models.Model):
     name = models.CharField(max_length=20)
@@ -10,8 +11,8 @@ class Person(models.Model):
 
 
     @property
-    def balance(self):
-        return self._balance
+    def get_balance(self):
+        return self.balance
 
 
     def __str__(self):
@@ -38,5 +39,20 @@ class Transaction(models.Model):
 
 
     def __str__(self):
-        return f'{self.type_tr} суммы {self.amount} пользователя {self.user_id}' 
+        return f'{self.type_tr} суммы {self.amount} пользователя {self.user_id}'
+
+
+    @staticmethod
+    def new_tr(user_id, amount, type_tr, category, res_or_sen, regular=False):
+        transaction = Transaction(
+            user_id=user_id,
+            amount=amount,
+            type_tr=type_tr,
+            category=category,
+            res_or_sen=res_or_sen,
+            regular=regular,
+            time=timezone.now()
+        )
+        transaction.save()
+        return transaction
 
