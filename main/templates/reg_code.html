@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Подтверждение кода — Управление бюджетом</title>
     <link rel="stylesheet" href="{% static 'main/css/auth.css' %}">
-    <script src="{% static 'main/js/form-errors.js' %}" defer></script>
 </head>
 <body>
     <main class="auth-card">
@@ -15,26 +14,17 @@
             Введите шестизначный код, отправленный на вашу почту
         </p>
 
-        <form method="post" data-ajax-form data-form-kind="code" novalidate>
+        <form method="post" novalidate>
             {% csrf_token %}
 
             <div class="form-row form-row--code">
-                <label for="us_code">Код подтверждения</label>
-                {% if form %}
-                    {{ form.us_code }}
-                {% else %}
-                    <input
-                        type="text"
-                        name="us_code"
-                        id="us_code"
-                        inputmode="numeric"
-                        autocomplete="one-time-code"
-                        maxlength="6"
-                        placeholder="••••••"
-                        required
-                    >
-                {% endif %}
+                <label for="{{ form.us_code.id_for_label }}">
+                    {{ form.us_code.label }}
+                </label>
+                {{ form.us_code }}
             </div>
+
+            {% include "includes/form_errors.html" %}
 
             <button class="submit-button" type="submit">Подтвердить</button>
         </form>
@@ -52,6 +42,5 @@
         </nav>
     </main>
 
-    {% include "includes/error_widget.html" %}
 </body>
 </html>
