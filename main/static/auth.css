@@ -150,6 +150,29 @@ body {
     text-decoration: none;
 }
 
+.status-card {
+    text-align: center;
+}
+
+.status-card__icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 20px;
+    place-items: center;
+    border-radius: 50%;
+    background: #d2fa3e;
+    color: #18210a;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.status-card__button {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+}
+
 @media (max-width: 520px) {
     body {
         padding: 14px;
