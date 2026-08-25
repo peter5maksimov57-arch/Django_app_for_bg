@@ -17,23 +17,16 @@ def index(request):
                 user = models.Person.objects.get(email=email)
 
                 if check_password(password, user.password):
-                    request.session['email'] = email
-                    request.session['name'] = user.name
-                    # request.session['password'] = user.password
-                    request.session['balance'] = user.balance
-                    request.session['role'] = user.role
-                    request.session['user_id'] = user.id
+                    return render(request, "home.html", {"user": user})
 
-                    return HttpResponse(f"<h2>Hello, {user.name}</h2>")
-                    """сделай приветвие и переход на главную страницу"""
                 else:
                     userform.add_error("password", "Неверный пароль.")
                     return render(request, "index.html", {"form": userform})
-                """Сделай тож как виджет какой-то или ещё что-то, чтоб потом можно было ещё раз войти"""
+
             except models.Person.DoesNotExist:
                 userform.add_error("email", "Пользователь с таким email не найден.")
                 return render(request, "index.html", {"form": userform})
-            """Снова придумай что-то"""
+
             
         else:
             return render(request, "index.html", {"form": userform})
@@ -44,15 +37,6 @@ def index(request):
     # return render(request, "index.html", {"form": userform})
     # return render(request, "index.html")
     # return HttpResponse("Apl_for_bg")
-
-
-def main_page(request):
-    if request.method == "POST":
-        pass
-    else:
-        pass
-        # return render(request, "index.html", {"form": userform})
-
 
 def registration(request):
     if request.method == "POST":
@@ -118,16 +102,18 @@ def registration(request):
             
         else:
             return render(request, "index.html", {"form": userform})
-            """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-            и пусть заново регается"""
     else:
         userform = forms.RegForm()
         return render(request, "index.html", {"form": userform})
  
 def reg_code(request):
     if 'reg_email' not in request.session:
-        return HttpResponse("Сессия истекла")
-    """Чет добавь и переход на экран входа"""
+        return render(request, "status.html", {
+            "title": "Сессия истекла",
+            "message": "Начните регистрацию заново, чтобы получить новый код.",
+            "button_text": "Вернуться к регистрации",
+            "button_url": "/registration/",
+        })
 
     if request.method == "POST":
         user_code_form = forms.RegCode(request.POST)
@@ -156,9 +142,13 @@ def reg_code(request):
             user.save()
             
             request.session.flush()
-            return HttpResponse(f"<h2>Пользователь {name} добавлен</h2>")
-            """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-            и переадресацию на экран входа (index)"""
+            return render(request, "status.html", {
+                "title": "Регистрация завершена",
+                "message": f"Пользователь {name} успешно добавлен.",
+                "button_text": "Перейти ко входу",
+                "button_url": "/",
+            })
+
         # user_code = forms.RegCode(request.POST)
         # code = mail.send_code(email)
         # if user_code.is_valid():
@@ -184,12 +174,11 @@ def reg_code(request):
         else:
             user_code_form.add_error('us_code', "Введён неверный код подтверждения.")
             return render(request, "reg_code.html", {"form": user_code_form})
-            """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-            и пусть заново вводит"""
+
 
     else:
         return render(request, "reg_code.html", {"form": forms.RegCode()})
-    """Переделай файл, я занейронил, тут вылезает код еще сам по себе без почты"""
+
 
 
 def password_reset(request):
@@ -214,8 +203,13 @@ def password_reset(request):
 
 def res_code(request):
     if 'res_email' not in request.session:
-        return HttpResponse("Сессия истекла")
-    """Чет добавь и переход на экран входа"""
+        return render(request, "status.html", {
+            "title": "Сессия истекла",
+            "message": "Запросите новый код для изменения пароля.",
+            "button_text": "Повторить сброс пароля",
+            "button_url": "/password_reset/",
+        })
+
     if request.method == "POST":
         user_code_form = forms.RegCode(request.POST)
         if not user_code_form.is_valid():
@@ -230,19 +224,22 @@ def res_code(request):
         else:
             user_code_form.add_error('us_code', "Введён неверный код подтверждения.")
             return render(request, "reg_code.html", {"form": user_code_form})
-            """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-            и пусть заново вводит"""
+
     else:
         return render(request, "reg_code.html", {"form": forms.RegCode()})
 
     
 def new_pas(request):
     if 'res_email' not in request.session:
-        return HttpResponse("Сессия истекла")
+        return render(request, "status.html", {
+            "title": "Сессия истекла",
+            "message": "Запросите новый код для изменения пароля.",
+            "button_text": "Повторить сброс пароля",
+            "button_url": "/password_reset/",
+        })
         """Чет добавь и переход на экран входа"""
     if request.method == "POST":
         userform = forms.PasswordForm(request.POST)
-    
         if userform.is_valid():
             n_password = userform.cleaned_data['password']
             email = request.session.get('res_email')
@@ -251,72 +248,17 @@ def new_pas(request):
             user.password = hash_password
             user.save()
             request.session.flush()
-            return HttpResponse(f"Пароль изменён")
-            """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-            и переадресацию на экран входа (index)"""
+            return render(request, "status.html", {
+                "title": "Пароль изменён",
+                "message": "Теперь вы можете войти с новым паролем.",
+                "button_text": "Перейти ко входу",
+                "button_url": "/",
+            })
+
         else:
             return render(request, "index.html", {"form": userform})
-        """Сделай по красоте"""
 
     else:
         userform = forms.PasswordForm()
         return render(request, "index.html", {"form": userform})
-    """Сделай по красоте"""
-
-
-def create_tr(request):
-    if 'user_id' not in request.session:
-        return HttpResponse("Сессия истекла")
     
-    if request.method == "POST":
-        userform = forms.CreatTrForm(request.POST)
-
-        if userform.is_valid():
-            user_id = request.session['user_id']
-
-            # email = userform.cleaned_data['email']
-            amount = userform.cleaned_data['amount']
-            type_tr = userform.cleaned_data['type_tr']
-            # time = forms.DateTimeField()
-            category = userform.cleaned_data['category']
-            res_or_sen = userform.cleaned_data['res_or_sen']
-            regullar = userform.cleaned_data['regullar']
-
-            if amount <= 0:
-                return HttpResponse(f"Транзакция должна быть больше 0")
-            """Добавь чёт"""
-
-            try:
-                transaction = models.Transaction.new_tr(
-                    user_id=user_id,
-                    amount=amount,
-                    type_tr=type_tr,
-                    category=category,
-                    res_or_sen=res_or_sen,
-                    regullar=regullar
-                )
-                
-                
-                user = models.Person.objects.get(id=user_id)
-                if type_tr == 'Поступление':
-                    user.balance = user.balance + amount
-                    user.save()
-                else:
-                    user.balance = user.balance - amount
-                    user.save()
-                
-                return HttpResponse(f"Транзакция добавлена")
-                """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-                и переадресацию на экран входа (index)"""
-            
-            except Exception as e:
-                return HttpResponse(f"Ошибка {e}")
-            """Добавь чёт"""
-            
-        else:
-            return render(request, "index.html", {"form": userform})
-            """Сделай по красоте""" 
-    else:
-        userform = forms.CreatTrForm()
-        return render(request, "index.html", {"form": userform})
-        """Сделай по красоте"""
