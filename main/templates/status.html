@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} — Управление бюджетом</title>
+    <link rel="stylesheet" href="{% static 'auth.css' %}">
+</head>
+<body>
+    <main class="auth-card status-card">
+        <div class="status-card__icon" aria-hidden="true">
+            {% if title == "Сессия истекла" %}!{% else %}✓{% endif %}
+        </div>
+        <h1 class="auth-card__title">{{ title }}</h1>
+        <p class="auth-card__subtitle">{{ message }}</p>
+        <a class="submit-button status-card__button" href="{{ button_url }}">
+            {{ button_text }}
+        </a>
+    </main>
+</body>
+</html>
