@@ -1,0 +1,172 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление бюджетом</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}">
+</head>
+<body>
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" checked>
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-transfers">
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-operations">
+
+    <div class="dashboard-shell">
+        <header class="dashboard-header">
+            <div>
+                <p class="dashboard-header__eyebrow">Управление бюджетом</p>
+                <h1>Здравствуйте, {{ user.name }}</h1>
+            </div>
+            <a class="logout-link" href="/">Выйти</a>
+        </header>
+
+        <nav class="tabs" aria-label="Разделы приложения">
+            <label for="tab-statistics">Статистика</label>
+            <label for="tab-transfers">Переводы</label>
+            <label for="tab-operations">Все операции</label>
+        </nav>
+
+        <main class="dashboard-content">
+            <section class="tab-panel panel--statistics">
+                <div class="balance-card">
+                    <span>Текущий счёт</span>
+                    <strong>{{ user.balance|floatformat:2 }} ₽</strong>
+                </div>
+
+                <div class="summary-grid">
+                    <article class="summary-card summary-card--income">
+                        <span>Пополнение</span>
+                        <strong>0,00 ₽</strong>
+                    </article>
+                    <article class="summary-card summary-card--expense">
+                        <span>Списание</span>
+                        <strong>0,00 ₽</strong>
+                    </article>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="content-card chart-card">
+                        <div class="section-heading">
+                            <div>
+                                <span>Обзор</span>
+                                <h2>Доходы и расходы</h2>
+                            </div>
+                            <span class="period-badge">Текущий месяц</span>
+                        </div>
+                        <div class="chart-placeholder" aria-label="Нет данных для графика">
+                            <div class="donut-chart"></div>
+                            <p>Добавьте первую операцию,<br>чтобы увидеть статистику</p>
+                        </div>
+                    </article>
+
+                    <article class="content-card">
+                        <div class="section-heading">
+                            <div>
+                                <span>Расходы</span>
+                                <h2>Топ категорий</h2>
+                            </div>
+                        </div>
+                        <div class="empty-state">Пока нет данных по категориям</div>
+                    </article>
+
+                    <article class="content-card">
+                        <div class="section-heading">
+                            <div>
+                                <span>История</span>
+                                <h2>Последние операции</h2>
+                            </div>
+                        </div>
+                        <div class="empty-state">Операции ещё не добавлены</div>
+                    </article>
+
+                    <article class="content-card">
+                        <div class="section-heading">
+                            <div>
+                                <span>Планирование</span>
+                                <h2>Предстоящие платежи</h2>
+                            </div>
+                        </div>
+                        <div class="empty-state">Нет предстоящих платежей</div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="tab-panel panel--transfers">
+                <article class="content-card form-card">
+                    <div class="section-heading">
+                        <div>
+                            <span>Новая запись</span>
+                            <h2>Добавить операцию</h2>
+                        </div>
+                    </div>
+
+                    <div class="operation-form">
+                        <label>
+                            Сумма
+                            <input type="number" placeholder="Например, 1200.50" disabled>
+                        </label>
+                        <label>
+                            Тип операции
+                            <select disabled>
+                                <option>Поступление</option>
+                                <option>Трата</option>
+                            </select>
+                        </label>
+                        <label>
+                            Категория
+                            <select disabled>
+                                <option>Выберите категорию</option>
+                            </select>
+                        </label>
+                        <label>
+                            ФИО
+                            <input type="text" placeholder="Иванов Иван Иванович" disabled>
+                        </label>
+                        <label>
+                            Тип платежа
+                            <select disabled>
+                                <option>Не постоянный</option>
+                                <option>Постоянный</option>
+                            </select>
+                        </label>
+                        <button type="button" disabled>Добавить</button>
+                    </div>
+                    <p class="feature-note">
+                        Для сохранения операций потребуется подключить Django-модель финансовых операций.
+                    </p>
+                </article>
+            </section>
+
+            <section class="tab-panel panel--operations">
+                <article class="content-card operations-card">
+                    <div class="section-heading">
+                        <div>
+                            <span>История</span>
+                            <h2>Все операции</h2>
+                        </div>
+                    </div>
+
+                    <div class="filters" aria-label="Фильтры операций">
+                        <select disabled><option>Все типы</option></select>
+                        <select disabled><option>Все категории</option></select>
+                        <input type="search" placeholder="Поиск по ФИО" disabled>
+                        <select disabled><option>Все платежи</option></select>
+                    </div>
+
+                    <div class="operations-table">
+                        <div class="operations-table__head">
+                            <span>Сумма</span>
+                            <span>Тип</span>
+                            <span>Категория</span>
+                            <span>ФИО</span>
+                            <span>Дата</span>
+                        </div>
+                        <div class="empty-state">Операции ещё не добавлены</div>
+                    </div>
+                </article>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
