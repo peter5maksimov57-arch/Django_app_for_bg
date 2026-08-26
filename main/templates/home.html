@@ -18,7 +18,7 @@
                 <p class="dashboard-header__eyebrow">Управление бюджетом</p>
                 <h1>Здравствуйте, {{ user.name }}</h1>
             </div>
-            <a class="logout-link" href="/">Выйти</a>
+            <a href="{% url 'logout' %}" class="logout-link">Выйти</a>
         </header>
 
         <nav class="tabs" aria-label="Разделы приложения">
@@ -101,40 +101,32 @@
                         </div>
                     </div>
 
-                    <div class="operation-form">
+                    <form method="post" action="{% url 'create_tr' %}" class="operation-form">
+                        {% csrf_token %}
+                        
                         <label>
                             Сумма
-                            <input type="number" placeholder="Например, 1200.50" disabled>
+                            {{ form.amount }}
                         </label>
                         <label>
                             Тип операции
-                            <select disabled>
-                                <option>Поступление</option>
-                                <option>Трата</option>
-                            </select>
+                            {{ form.type_tr }}
                         </label>
                         <label>
                             Категория
-                            <select disabled>
-                                <option>Выберите категорию</option>
-                            </select>
+                            {{ form.category }}
                         </label>
                         <label>
-                            ФИО
-                            <input type="text" placeholder="Иванов Иван Иванович" disabled>
+                            Получатель/Отправитель
+                            {{ form.res_or_sen }}
                         </label>
                         <label>
-                            Тип платежа
-                            <select disabled>
-                                <option>Не постоянный</option>
-                                <option>Постоянный</option>
-                            </select>
+                            Регулярный платёж
+                            {{ form.regullar }}
                         </label>
-                        <button type="button" disabled>Добавить</button>
-                    </div>
-                    <p class="feature-note">
-                        Для сохранения операций потребуется подключить Django-модель финансовых операций.
-                    </p>
+                        
+                        <button type="submit">Добавить</button>
+                    </form>
                 </article>
             </section>
 

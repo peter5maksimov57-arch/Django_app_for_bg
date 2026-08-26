@@ -26,11 +26,32 @@ class PasswordForm(forms.Form):
 
 
 class CreatTrForm(forms.Form):
+    TYPE_CHOICES = [
+        ('Поступление', 'Поступление'),
+        ('Трата', 'Трата'),
+    ]
+    
+    CATEGORY_CHOICES = [
+        ('Переводы людям', 'Переводы людям'),
+        ('Зарплата', 'Зарплата'),
+        ('Продукты', 'Продукты'),
+        ('Электроника', 'Электроника'),
+        ('Развлечения', 'Развлечения'),
+        ('Кафе и рестораны', 'Кафе и рестораны'),
+        ('Товары для дома', 'Товары для дома'),
+        ('АЗС', 'АЗС'),
+        ('Цифровые сервисы', 'Цифровые сервисы'),
+        ('Пополнение наличными', 'Пополнение наличными'),
+        ('Одежда и обувь', 'Одежда и обувь'),
+        ('ЖКХ', 'ЖКХ'),
+        ('Другое', 'Другое'),
+    ]
+
     # user_id = forms.IntegerField()
-    amount = forms.FloatField()
-    type_tr = forms.CharField()
+    amount = forms.FloatField(min_value=0.01)
+    type_tr = forms.ChoiceField(choices=TYPE_CHOICES)
     # time = forms.DateTimeField()
-    category = forms.CharField()
+    category = forms.ChoiceField(choices=CATEGORY_CHOICES)
     res_or_sen = forms.CharField()
-    regullar = forms.BooleanField()
+    regullar = forms.BooleanField(required=False)
     

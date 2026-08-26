@@ -10,9 +10,9 @@ class Person(models.Model):
     role = models.CharField()
 
 
-    @property
-    def get_balance(self):
-        return self.balance
+    # @property
+    # def get_balance(self):
+    #     return self.balance
 
 
     def __str__(self):
@@ -30,12 +30,12 @@ class Transaction(models.Model):
     regullar = models.BooleanField()
 
 
-    @property
-    def categories(self):
-        categories = ["Переводы людям", "Зарплата", "Продукты", "Электроника",
-            "Развлечения", "Кафе и рестораны", "Товары для дома", "АЗС", "Цифровые сервисы",
-            "Пополнение наличными", "Одежда и обувь", "ЖКХ", "Другое"]
-        return categories
+    # @property
+    # def categories(self):
+    #     categories = ["Переводы людям", "Зарплата", "Продукты", "Электроника",
+    #         "Развлечения", "Кафе и рестораны", "Товары для дома", "АЗС", "Цифровые сервисы",
+    #         "Пополнение наличными", "Одежда и обувь", "ЖКХ", "Другое"]
+    #     return categories
 
 
     def __str__(self):
@@ -43,14 +43,14 @@ class Transaction(models.Model):
 
 
     @staticmethod
-    def new_tr(user_id, amount, type_tr, category, res_or_sen, regular=False):
+    def new_tr(user_id, amount, type_tr, category, res_or_sen, regullar=False):
         transaction = Transaction(
             user_id=user_id,
             amount=amount,
             type_tr=type_tr,
             category=category,
             res_or_sen=res_or_sen,
-            regular=regular,
+            regullar=regullar,
             time=timezone.now()
         )
         transaction.save()

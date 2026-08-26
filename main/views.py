@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from main import forms
 from main import models
@@ -15,14 +16,15 @@ def index(request):
 
             try:
                 user = models.Person.objects.get(email=email)
-                request.session['email'] = email
-                request.session['name'] = user.name
+                # request.session['email'] = email
+                # request.session['name'] = user.name
                 # request.session['password'] = user.password
-                request.session['balance'] = user.balance
-                request.session['role'] = user.role
+                # request.session['balance'] = user.balance
+                # request.session['role'] = user.role
                 request.session['user_id'] = user.id
                 if check_password(password, user.password):
-                    return render(request, "home.html", {"user": user})
+                    # return render(request, "home.html", {"user": user})
+                    return redirect('main_page')
 
                 else:
                     userform.add_error("password", "Неверный пароль.")
@@ -45,9 +47,23 @@ def index(request):
 
 
 def main_page(request):
+    if 'user_id' not in request.session:
+        return render(request, "status.html", {
+            "title": "Сессия истекла",
+            "message": "Войдите в аккаунт",
+            "button_text": "Войти",
+            "button_url": "/",
+        })
+
+    user = models.Person.objects.get(id=request.session['user_id'])
+
     if request.method == "POST":
+
         pass
     else:
+        form = forms.CreatTrForm()
+        return render(request, "home.html", {"user": user, "form": form})
+        # return render(request, "home.html", {"user": user})
         pass
         # return render(request, "index.html", {"form": userform})
 
@@ -279,7 +295,12 @@ def new_pas(request):
     
 def create_tr(request):
     if 'user_id' not in request.session:
-        return HttpResponse("Сессия истекла")
+        return render(request, "status.html", {
+            "title": "Сессия истекла",
+            "message": "Войдите в аккаунт.",
+            "button_text": "Войти",
+            "button_url": "/",
+        })
     
     if request.method == "POST":
         userform = forms.CreatTrForm(request.POST)
@@ -295,10 +316,7 @@ def create_tr(request):
             res_or_sen = userform.cleaned_data['res_or_sen']
             regullar = userform.cleaned_data['regullar']
 
-            if amount <= 0:
-                return HttpResponse(f"Транзакция должна быть больше 0")
-            """Добавь чёт"""
-
+            
             try:
                 transaction = models.Transaction.new_tr(
                     user_id=user_id,
@@ -318,18 +336,37 @@ def create_tr(request):
                     user.balance = user.balance - amount
                     user.save()
                 
-                return HttpResponse(f"Транзакция добавлена")
-                """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-                и переадресацию на экран входа (index)"""
+                messages.success(request, 'Транзакция успешно добавлена!')
+                return redirect('main_page')
             
             except Exception as e:
-                return HttpResponse(f"Ошибка {e}")
-            """Добавь чёт"""
+                return render(request, "home.html", {
+                    "user": models.Person.objects.get(id=user_id),
+                    "error": f"Ошибка при создании транзакции: {e}",
+                    "form": userform
+                })
             
         else:
-            return render(request, "index.html", {"form": userform})
-            """Сделай по красоте""" 
+            user = models.Person.objects.get(id=request.session['user_id'])
+            return render(request, "home.html", {
+                "user": user,
+                "form": userform,
+                # "transactions": models.Transaction.objects.filter(user_id=user.id).order_by('-time')
+            }) 
     else:
-        userform = forms.CreatTrForm()
-        return render(request, "index.html", {"form": userform})
+        return redirect('main_page')
+        # userform = forms.CreatTrForm()
+        # return render(request, "index.html", {"form": userform})
         """Сделай по красоте"""
+
+
+def logout_view(request):
+    request.session.flush()
+    return render(request, "status.html", {
+        "title": "Выход из аккаунта",
+        "message": f"Вы успешно вышли из системы!",
+        "button_text": "Перейти ко входу",
+        "button_url": "/",
+    })
+    # messages.success(request, 'Вы успешно вышли из системы!')
+    # return redirect('home')
