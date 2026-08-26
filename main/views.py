@@ -56,15 +56,36 @@ def main_page(request):
         })
 
     user = models.Person.objects.get(id=request.session['user_id'])
-
+    # try:
+    #     user = models.Person.objects.get(id=request.session['user_id'])
+    # except models.Person.DoesNotExist:
+    #     request.session.flush()
+    #     return render(request, "status.html", {
+    #         "title": "Ошибка",
+    #         "message": "Пользователь не найден. Пожалуйста, войдите снова.",
+    #         "button_text": "Войти",
+    #         "button_url": "/",
+    #     })
     if request.method == "POST":
 
         pass
     else:
+        income = models.Transaction.all_typeTr_for_month(user.id, 'Поступление')
+        outcome = models.Transaction.all_typeTr_for_month(user.id, 'Трата')
+
+        inc_for_categories = models.Transaction.inc_for_categories(user.id)
+
+
+
         form = forms.CreatTrForm()
-        return render(request, "home.html", {"user": user, "form": form})
+        return render(request, "home.html", {"user": user, 
+                                            "form": form, 
+                                            "income": income,
+                                            "outcome": outcome,
+                                            "top_categories": inc_for_categories[:3],
+                                            "inc_for_categories": inc_for_categories,})
         # return render(request, "home.html", {"user": user})
-        pass
+        # pass
         # return render(request, "index.html", {"form": userform})
 
 

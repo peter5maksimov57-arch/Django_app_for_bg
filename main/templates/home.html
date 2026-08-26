@@ -37,11 +37,11 @@
                 <div class="summary-grid">
                     <article class="summary-card summary-card--income">
                         <span>Пополнение</span>
-                        <strong>0,00 ₽</strong>
+                        <strong>{{ income|floatformat:2 }} ₽</strong>
                     </article>
                     <article class="summary-card summary-card--expense">
                         <span>Списание</span>
-                        <strong>0,00 ₽</strong>
+                        <strong>{{ outcome|floatformat:2 }} ₽</strong>
                     </article>
                 </div>
 
@@ -67,7 +67,20 @@
                                 <h2>Топ категорий</h2>
                             </div>
                         </div>
-                        <div class="empty-state">Пока нет данных по категориям</div>
+                        <div class="empty-state">
+                            {% if top_categories %}
+                                <ul style="list-style: none; padding: 0; margin: 0; text-align: left; width: 100%;">
+                                    {% for item in top_categories %}
+                                        <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                            <span>{{ item.0 }}</span>
+                                            <strong>{{ item.1|floatformat:2 }} ₽</strong>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                Пока нет данных по категориям
+                            {% endif %}
+                        </div>
                     </article>
 
                     <article class="content-card">

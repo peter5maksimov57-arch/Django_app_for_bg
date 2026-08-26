@@ -30,12 +30,9 @@ class Transaction(models.Model):
     regullar = models.BooleanField()
 
 
-    # @property
-    # def categories(self):
-    #     categories = ["Переводы людям", "Зарплата", "Продукты", "Электроника",
-    #         "Развлечения", "Кафе и рестораны", "Товары для дома", "АЗС", "Цифровые сервисы",
-    #         "Пополнение наличными", "Одежда и обувь", "ЖКХ", "Другое"]
-    #     return categories
+    categories = ["Переводы людям", "Зарплата", "Продукты", "Электроника",
+            "Развлечения", "Кафе и рестораны", "Товары для дома", "АЗС", "Цифровые сервисы",
+            "Пополнение наличными", "Одежда и обувь", "ЖКХ", "Другое"]
 
 
     def __str__(self):
@@ -56,3 +53,57 @@ class Transaction(models.Model):
         transaction.save()
         return transaction
 
+
+    @staticmethod
+    def all_typeTr_for_month(us_id, type_tr):
+        now = timezone.now()
+        year = now.year
+        month = now.month 
+        tr = Transaction.objects.filter(user_id=us_id, type_tr=type_tr,
+                                        time__year=year, time__month=month)
+        income_sum = 0
+        for i in tr:
+            income_sum += i.amount
+        return income_sum
+
+
+    # @staticmethod
+    # def inc_for_categories(us_id):
+    #     now = timezone.now()
+    #     year = now.year
+    #     month = now.month
+
+    #     res = []
+
+    #     for i in Transaction.categories:
+    #         tr = Transaction.objects.filter(user_id=us_id, type_tr='Трата',
+    #                                         time__year=year, time__month=month, category=i)
+    #         summa = sum(j.amount for j in tr)
+
+    #         res.append([i, summa])
+    #     res.sort(key=lambda x: x[1], reverse=True)
+    #     return res
+
+
+    @staticmethod
+    def inc_for_categories(us_id):
+        now = timezone.now()
+        year = now.year
+        month = now.month
+
+        transactions = Transaction.objects.filter(user_id=us_id, type_tr='Трата',
+            time__year=year, time__month=month)
+        
+        categories_data = {}
+        for transaction in transactions:
+            if transaction.category not in categories_data:
+                categories_data[transaction.category] = 0
+            categories_data[transaction.category] += transaction.amount
+        
+        sorted_categories = sorted(categories_data.items(), key=lambda x: x[1], reverse=True)
+        
+        return sorted_categories
+
+
+
+        
