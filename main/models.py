@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from datetime import datetime, timedelta
  
 class Person(models.Model):
     name = models.CharField(max_length=20)
@@ -116,9 +117,42 @@ class Transaction(models.Model):
 
 
     @staticmethod
-    def future_transaction(us_id):
-        future_tr = Transaction.objects.filter(user_id=us_id, regullar=True)
-
+    def future_transaction(user_id, days_ahead=7):
+        reg_tr = Transaction.objects.filter(user_id=user_id, regullar=True).order_by('time')
+        
+        future_tr = []
+        today = timezone.now().date()
+        
+        for transaction in reg_tr:
+            last_trans = Transaction.objects.filter(
+                user_id=user_id,
+                category=transaction.category,
+                type_tr=transaction.type_tr,
+                amount=transaction.amount,
+                regullar=True).order_by('-time').first()
+            
+            if last_trans:
+                last_date = last_trans.time.date()
+                next_date = last_date + timedelta(days=30)
+            else:
+                next_date = today + timedelta(days=1)
+            
+            days_until = (next_date - today).days
+            
+            if 0 <= days_until <= days_ahead:
+                future_tr.append({
+                    'id': transaction.id,
+                    'category': transaction.category,
+                    'amount': transaction.amount,
+                    'type_tr': transaction.type_tr,
+                    'res_or_sen': transaction.res_or_sen,
+                    'next_date': next_date,
+                    'days_left': days_until,
+                    'is_regular': True,
+                    'status': 'soon' if days_until <= 3 else 'upcoming'
+                })
+        
+        future_tr.sort(key=lambda x: x['next_date'])
+        
         return future_tr
-
         
