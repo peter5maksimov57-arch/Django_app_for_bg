@@ -36,7 +36,7 @@ class Transaction(models.Model):
 
 
     def __str__(self):
-        return f'{self.type_tr} суммы {self.amount} пользователя {self.user_id}'
+        return f'{self.type_tr} суммы {self.amount} по категории {self.category} {self.time} {self.res_or_sen}'
 
 
     @staticmethod
@@ -105,5 +105,20 @@ class Transaction(models.Model):
         return sorted_categories
 
 
+    @staticmethod
+    def last_transaction(us_id):
+        last_tr = Transaction.objects.filter(user_id=us_id).order_by('-time')
+        # last_tr = [i for i in tr].sort(reverse=True)
+
+        # transactions.sort(reverse=True)
+        # transactions = sorted(transactions, reverse=True)
+        return last_tr
+
+
+    @staticmethod
+    def future_transaction(us_id):
+        future_tr = Transaction.objects.filter(user_id=us_id, regullar=True)
+
+        return future_tr
 
         

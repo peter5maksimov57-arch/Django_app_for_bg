@@ -66,6 +66,7 @@ def main_page(request):
     #         "button_text": "Войти",
     #         "button_url": "/",
     #     })
+
     if request.method == "POST":
 
         pass
@@ -75,6 +76,12 @@ def main_page(request):
 
         inc_for_categories = models.Transaction.inc_for_categories(user.id)
 
+        last_tr = models.Transaction.last_transaction(user.id)
+
+        future_tr = models.Transaction.future_transaction(user.id)
+
+        print(future_tr)
+
 
 
         form = forms.CreatTrForm()
@@ -83,7 +90,8 @@ def main_page(request):
                                             "income": income,
                                             "outcome": outcome,
                                             "top_categories": inc_for_categories[:3],
-                                            "inc_for_categories": inc_for_categories,})
+                                            "inc_for_categories": inc_for_categories,
+                                            "last_tr": last_tr[:3]})
         # return render(request, "home.html", {"user": user})
         # pass
         # return render(request, "index.html", {"form": userform})
