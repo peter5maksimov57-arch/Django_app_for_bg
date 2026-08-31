@@ -12,4 +12,5 @@ urlpatterns = [
     path('main_page', views.main_page, name='main_page'),
     path('logout/', views.logout_view, name='logout'),
     path('main_page/create_tr/', views.create_tr, name='create_tr'),
+    # path('main_page/view_transactions/', views.view_transactions, name="view_transactions")
 ]

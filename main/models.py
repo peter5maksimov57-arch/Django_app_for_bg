@@ -155,4 +155,18 @@ class Transaction(models.Model):
         future_tr.sort(key=lambda x: x['next_date'])
         
         return future_tr
+
+
+    @staticmethod
+    def all_transactions(user_id, filters=None):
+        tr = Transaction.objects.filter(user_id=user_id)
+
+        if filters != None:
+            for i in filters:
+                if filters[i] != "Все":
+                    tr = tr.filter(i=filters[i])
+
+        return tr
+
+
         

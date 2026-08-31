@@ -56,6 +56,11 @@ def main_page(request):
         })
 
     user = models.Person.objects.get(id=request.session['user_id'])
+
+    view_form = forms.ViewTrForm()
+
+    all_transactions = models.Transaction.objects.filter(user_id=user.id).order_by('-time')
+    
     # try:
     #     user = models.Person.objects.get(id=request.session['user_id'])
     # except models.Person.DoesNotExist:
@@ -68,33 +73,50 @@ def main_page(request):
     #     })
 
     if request.method == "POST":
+        view_form = forms.ViewTrForm(request.POST)
 
-        pass
-    else:
-        income = models.Transaction.all_typeTr_for_month(user.id, 'Поступление')
-        outcome = models.Transaction.all_typeTr_for_month(user.id, 'Трата')
+        if view_form.is_valid():
+            # email = userform.cleaned_data['email']
+            # amount = userform.cleaned_data['amount']
+            type_tr = view_form.cleaned_data['type_tr']
+            # time = forms.DateTimeField()
+            category = view_form.cleaned_data['category']
+            res_or_sen = view_form.cleaned_data['res_or_sen']
+            regullar = view_form.cleaned_data['regullar']
+        
+            filters = {'type_tr': type_tr,
+                        'category': category,
+                        'res_or_sen': res_or_sen,
+                        'regullar': regullar,
+                        }
+        
+            all_transactions = models.Transaction.all_transactions(user.id, filters)
 
-        inc_for_categories = models.Transaction.inc_for_categories(user.id)
+    
+    income = models.Transaction.all_typeTr_for_month(user.id, 'Поступление')
+    outcome = models.Transaction.all_typeTr_for_month(user.id, 'Трата')
 
-        last_tr = models.Transaction.last_transaction(user.id)
+    inc_for_categories = models.Transaction.inc_for_categories(user.id)
 
-        future_tr = models.Transaction.future_transaction(user.id)
+    last_tr = models.Transaction.last_transaction(user.id)
 
-        print(future_tr)
+    future_tr = models.Transaction.future_transaction(user.id)
+
+    # print(future_tr)
 
 
 
-        form = forms.CreatTrForm()
-        return render(request, "home.html", {"user": user, 
-                                            "form": form, 
-                                            "income": income,
-                                            "outcome": outcome,
-                                            "top_categories": inc_for_categories[:3],
-                                            "inc_for_categories": inc_for_categories,
-                                            "last_tr": last_tr[:3]})
-        # return render(request, "home.html", {"user": user})
-        # pass
-        # return render(request, "index.html", {"form": userform})
+    form = forms.CreatTrForm()
+    return render(request, "home.html", {"user": user, 
+                                        "form": form,
+                                        "view_form": view_form,
+                                        "all_transactions": all_transactions,
+                                        "income": income,
+                                        "outcome": outcome,
+                                        "top_categories": inc_for_categories[:3],
+                                        "inc_for_categories": inc_for_categories,
+                                        "last_tr": last_tr[:3],
+                                        "future_tr": future_tr})
 
 
 def registration(request):
@@ -119,46 +141,6 @@ def registration(request):
                 code = mail.send_code(email, 'Код для регистрации в приложении')
                 request.session['verification_code'] = str(code)
                 return redirect('reg_code')
-                # user_code = forms.RegCode(request.POST)
-                # code = mail.send_code(email)
-                # if user_code.is_valid():
-                #     us_code = user_code.cleaned_data['us_code']
-                #     if us_code == code:
-                #         hash_password = make_password(password)
-                #         user = models.Person(
-                #             email=email,
-                #             name=name,
-                #             password=hash_password,
-                #             role='',
-                #             # age=age,
-                #             balance=0
-                #             )
-                #         user.save()
-                #         return HttpResponse(f"<h2>Пользователь {name} добавлен</h2>")
-                #         """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-                #         и переадресацию на экран входа (index)"""
-                #     else:
-                #         return HttpResponse("Неверный код")
-                #         """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-                #         и пусть заново вводит"""
-                # else:
-                #     return HttpResponse("Invalid code")
-                #     """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-                #     и пусть заново вводит"""
-            #     hash_password = make_password(password)
-            #     user = models.Person(
-            #         email=email,
-            #         name=name,
-            #         password=hash_password,
-            #         role='',
-            #         # age=age,
-            #         balance=0
-            #     )
-            #     user.save()
-            #     return HttpResponse(f"<h2>Пользователь {name} добавлен</h2>")
-            # """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-            # и переадресацию на экран входа (index)"""
-            
         else:
             return render(request, "index.html", {"form": userform})
     else:
@@ -208,28 +190,6 @@ def reg_code(request):
                 "button_url": "/",
             })
 
-        # user_code = forms.RegCode(request.POST)
-        # code = mail.send_code(email)
-        # if user_code.is_valid():
-        #     us_code = user_code.cleaned_data['us_code']
-        #     if us_code == code:
-        #         hash_password = make_password(password)
-        #         user = models.Person(
-        #             email=email,
-        #             name=name,
-        #             password=hash_password,
-        #             role='',
-        #             # age=age,
-        #             balance=0
-        #             )
-        #         user.save()
-                # return HttpResponse(f"<h2>Пользователь {name} добавлен</h2>")
-                # """Сделай вместо пользователь добавлен какой-ниюудь красивый виджет, что добавлен 
-                # и переадресацию на экран входа (index)"""
-            # else:
-            #     return HttpResponse("Неверный код")
-            #     """Сделай какой-ниюудь виджет или чёт ещё, чтоб просто вылезало про ошибку данных
-            #         и пусть заново вводит"""
         else:
             user_code_form.add_error('us_code', "Введён неверный код подтверждения.")
             return render(request, "reg_code.html", {"form": user_code_form})
@@ -384,10 +344,7 @@ def create_tr(request):
             }) 
     else:
         return redirect('main_page')
-        # userform = forms.CreatTrForm()
-        # return render(request, "index.html", {"form": userform})
-        """Сделай по красоте"""
-
+    
 
 def logout_view(request):
     request.session.flush()
@@ -397,5 +354,50 @@ def logout_view(request):
         "button_text": "Перейти ко входу",
         "button_url": "/",
     })
-    # messages.success(request, 'Вы успешно вышли из системы!')
-    # return redirect('home')
+
+
+# def view_transactions(request):
+#     if 'user_id' not in request.session:
+#             return render(request, "status.html", {
+#                 "title": "Сессия истекла",
+#                 "message": "Войдите в аккаунт.",
+#                 "button_text": "Войти",
+#                 "button_url": "/",
+#             })
+
+#     if request.method == "POST":
+#         userform = forms.ViewTrForm(request.POST)
+    
+#         if userform.is_valid():
+#             user_id = request.session['user_id']
+    
+#             # email = userform.cleaned_data['email']
+#             # amount = userform.cleaned_data['amount']
+#             type_tr = userform.cleaned_data['type_tr']
+#             # time = forms.DateTimeField()
+#             category = userform.cleaned_data['category']
+#             res_or_sen = userform.cleaned_data['res_or_sen']
+#             regullar = userform.cleaned_data['regullar']
+
+#             filters = {'type_tr': type_tr,
+#                        'category': category,
+#                        'res_or_sen': res_or_sen,
+#                        'regullar': regullar,
+#                        }
+
+#             transactions = models.Transaction.all_transactions(user_id, filters)
+#             # print(transactions)
+    
+                
+                
+#         else:
+#             user = models.Person.objects.get(id=request.session['user_id'])
+#             return render(request, "home.html", {
+#                 "user": user,
+#                 "form": userform,
+#                 # "transactions": models.Transaction.objects.filter(user_id=user.id).order_by('-time')
+#             }) 
+#     else:
+#         return redirect('main_page')
+
+    
