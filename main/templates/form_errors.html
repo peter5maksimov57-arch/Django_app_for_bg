@@ -2,7 +2,20 @@
     <div class="form-errors" role="alert">
         {% for field in form %}
             {% for error in field.errors %}
-                <p>{{ field.label }}: {{ error }}</p>
+                <p>
+                    {% if field.name == "name" %}
+                        Имя
+                    {% elif field.name == "email" %}
+                        Электронная почта
+                    {% elif field.name == "password" %}
+                        Пароль
+                    {% elif field.name == "us_code" %}
+                        Код подтверждения
+                    {% else %}
+                        {{ field.label }}
+                    {% endif %}:
+                    {{ error }}
+                </p>
             {% endfor %}
         {% endfor %}
 

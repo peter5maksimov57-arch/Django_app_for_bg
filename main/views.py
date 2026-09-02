@@ -60,7 +60,7 @@ def main_page(request):
     view_form = forms.ViewTrForm()
 
     all_transactions = models.Transaction.objects.filter(user_id=user.id).order_by('-time')
-    
+
     # try:
     #     user = models.Person.objects.get(id=request.session['user_id'])
     # except models.Person.DoesNotExist:
@@ -72,7 +72,7 @@ def main_page(request):
     #         "button_url": "/",
     #     })
 
-    if request.method == "POST":
+    if request.method == "POST" and 'refresh_chart' not in request.POST:
         view_form = forms.ViewTrForm(request.POST)
 
         if view_form.is_valid():
@@ -92,11 +92,37 @@ def main_page(request):
         
             all_transactions = models.Transaction.all_transactions(user.id, filters)
 
-    
+
     income = models.Transaction.all_typeTr_for_month(user.id, 'Поступление')
     outcome = models.Transaction.all_typeTr_for_month(user.id, 'Трата')
 
     inc_for_categories = models.Transaction.inc_for_categories(user.id)
+
+    chart_colors = ['#4f6500', '#7b940d', '#a2c41d', '#d2fa3e',
+                    '#efb82f', '#e78132', '#c5523b', '#8f3c52',
+                    '#635080', '#39758a', '#3d8d70', '#70a947', '#aacb55']
+    expense_chart = []
+    chart_segments = []
+    chart_position = 0
+
+    if outcome > 0:
+        for index, (category, amount) in enumerate(inc_for_categories):
+            segment_end = chart_position + amount / outcome * 100
+            color = chart_colors[index % len(chart_colors)]
+            chart_segments.append(
+                f'{color} {chart_position:.2f}% {segment_end:.2f}%'
+            )
+            expense_chart.append({
+                'category': category,
+                'amount': amount,
+                'color': color,
+            })
+            chart_position = segment_end
+
+    expense_chart_gradient = (
+        f"conic-gradient({', '.join(chart_segments)})"
+        if chart_segments else '#e8f5d0'
+    )
 
     last_tr = models.Transaction.last_transaction(user.id)
 
@@ -115,6 +141,8 @@ def main_page(request):
                                         "outcome": outcome,
                                         "top_categories": inc_for_categories[:3],
                                         "inc_for_categories": inc_for_categories,
+                                        "expense_chart": expense_chart,
+                                        "expense_chart_gradient": expense_chart_gradient,
                                         "last_tr": last_tr[:3],
                                         "future_tr": future_tr})
 
@@ -400,4 +428,3 @@ def logout_view(request):
 #     else:
 #         return redirect('main_page')
 
-    

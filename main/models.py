@@ -161,12 +161,14 @@ class Transaction(models.Model):
     def all_transactions(user_id, filters=None):
         tr = Transaction.objects.filter(user_id=user_id)
 
-        if filters != None:
-            for i in filters:
-                if filters[i] != "Все":
-                    tr = tr.filter(i=filters[i])
+        if filters is not None:
+            for field, value in filters.items():
+                if value in ("Все", "", None):
+                    continue
+                if field == "regullar":
+                    value = value == "Регулярный"
+                tr = tr.filter(**{field: value})
 
-        return tr
+        return tr.order_by('-time')
 
 
-        

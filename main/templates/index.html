@@ -38,7 +38,17 @@
 
             {% for field in form %}
                 <div class="form-row">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <label for="{{ field.id_for_label }}">
+                        {% if field.name == "name" %}
+                            Имя
+                        {% elif field.name == "email" %}
+                            Электронная почта
+                        {% elif field.name == "password" %}
+                            Пароль
+                        {% else %}
+                            {{ field.label }}
+                        {% endif %}
+                    </label>
                     {{ field }}
                 </div>
             {% endfor %}

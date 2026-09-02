@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="{% static 'dashboard.css' %}">
 </head>
 <body>
-    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" checked>
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" {% if request.method != "POST" or request.POST.refresh_chart %}checked{% endif %}>
     <input class="tab-control" type="radio" name="dashboard-tab" id="tab-transfers">
-    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-operations">
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-operations" {% if request.method == "POST" and not request.POST.refresh_chart %}checked{% endif %}>
 
     <div class="dashboard-shell">
         <header class="dashboard-header">
@@ -49,14 +49,51 @@
                     <article class="content-card chart-card">
                         <div class="section-heading">
                             <div>
-                                <span>Обзор</span>
-                                <h2>Доходы и расходы</h2>
+                                <span>Расходы</span>
+                                <h2>Расходы по категориям</h2>
                             </div>
-                            <span class="period-badge">Текущий месяц</span>
+                            <div class="chart-actions">
+                                <span class="period-badge">Текущий месяц</span>
+                                <form method="post" action="{% url 'main_page' %}">
+                                    {% csrf_token %}
+                                    <button class="chart-refresh-button" type="submit" name="refresh_chart" value="1">
+                                        Обновить диаграмму
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="chart-placeholder" aria-label="Нет данных для графика">
-                            <div class="donut-chart"></div>
-                            <p>Добавьте первую операцию,<br>чтобы увидеть статистику</p>
+
+                        <div class="expense-chart">
+                            <div
+                                class="donut-chart"
+                                role="img"
+                                aria-label="Расходы за текущий месяц: {{ outcome|floatformat:2 }} рублей"
+                                style="background: {{ expense_chart_gradient }};"
+                            >
+                                <div class="donut-chart__center">
+                                    <span>Всего расходов</span>
+                                    <strong>{{ outcome|floatformat:2 }} ₽</strong>
+                                </div>
+                            </div>
+
+                            <div class="expense-legend">
+                                {% for item in expense_chart %}
+                                    <div class="expense-legend__item">
+                                        <span
+                                            class="expense-legend__color"
+                                            style="background-color: {{ item.color }};"
+                                        ></span>
+                                        <span>{{ item.category }}</span>
+                                        <span class="expense-legend__value">
+                                            {{ item.amount|floatformat:2 }} ₽
+                                        </span>
+                                    </div>
+                                {% empty %}
+                                    <p class="expense-chart__empty">
+                                        В текущем месяце расходов пока нет
+                                    </p>
+                                {% endfor %}
+                            </div>
                         </div>
                     </article>
 
@@ -69,9 +106,9 @@
                         </div>
                         <div class="empty-state">
                             {% if top_categories %}
-                                <ul style="list-style: none; padding: 0; margin: 0; text-align: left; width: 100%;">
+                                <ul class="category-list">
                                     {% for item in top_categories %}
-                                        <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                        <li>
                                             <span>{{ item.0 }}</span>
                                             <strong>{{ item.1|floatformat:2 }} ₽</strong>
                                         </li>
@@ -147,27 +184,62 @@
                 <article class="content-card operations-card">
                     <div class="section-heading">
                         <div>
-                            <span>История</span>
+                            <span>Поиск и история</span>
                             <h2>Все операции</h2>
                         </div>
+                        <span class="period-badge">{{ all_transactions|length }} записей</span>
                     </div>
 
-                    <div class="filters" aria-label="Фильтры операций">
-                        <select disabled><option>Все типы</option></select>
-                        <select disabled><option>Все категории</option></select>
-                        <input type="search" placeholder="Поиск по ФИО" disabled>
-                        <select disabled><option>Все платежи</option></select>
-                    </div>
+                    <form class="filters" method="post" action="{% url 'main_page' %}">
+                        {% csrf_token %}
+                        <label>
+                            <span>Тип</span>
+                            {{ view_form.type_tr }}
+                        </label>
+                        <label>
+                            <span>Категория</span>
+                            {{ view_form.category }}
+                        </label>
+                        <label>
+                            <span>Получатель / отправитель</span>
+                            {{ view_form.res_or_sen }}
+                        </label>
+                        <label>
+                            <span>Платёж</span>
+                            {{ view_form.regullar }}
+                        </label>
+                        <button class="filter-button" type="submit">Найти</button>
+                        <a class="reset-button" href="{% url 'main_page' %}">Сбросить</a>
+                    </form>
 
                     <div class="operations-table">
                         <div class="operations-table__head">
                             <span>Сумма</span>
                             <span>Тип</span>
                             <span>Категория</span>
-                            <span>ФИО</span>
+                            <span>Получатель / отправитель</span>
+                            <span>Платёж</span>
                             <span>Дата</span>
                         </div>
-                        <div class="empty-state">Операции ещё не добавлены</div>
+
+                        {% for transaction in all_transactions %}
+                            <article class="operation-row">
+                                <strong class="operation-row__amount {% if transaction.type_tr == 'Трата' %}operation-row__amount--expense{% else %}operation-row__amount--income{% endif %}">
+                                    {% if transaction.type_tr == 'Трата' %}−{% else %}+{% endif %}{{ transaction.amount|floatformat:2 }} ₽
+                                </strong>
+                                <span data-label="Тип">{{ transaction.type_tr }}</span>
+                                <span data-label="Категория">{{ transaction.category }}</span>
+                                <span data-label="Получатель / отправитель">{{ transaction.res_or_sen }}</span>
+                                <span data-label="Платёж">
+                                    {% if transaction.regullar %}Регулярный{% else %}Разовый{% endif %}
+                                </span>
+                                <time data-label="Дата" datetime="{{ transaction.time|date:'c' }}">
+                                    {{ transaction.time|date:"d.m.Y H:i" }}
+                                </time>
+                            </article>
+                        {% empty %}
+                            <div class="empty-state">По выбранным условиям операций нет</div>
+                        {% endfor %}
                     </div>
                 </article>
             </section>

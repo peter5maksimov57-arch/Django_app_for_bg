@@ -82,13 +82,16 @@ class ViewTrForm(forms.Form):
 
     REGULLAR_CHOICES = [
         ('Все', 'Все'),
-        ('Регулярный', 1),
-        ('Нерегулярный', 0),
+        ('Регулярный', 'Регулярный'),
+        ('Нерегулярный', 'Нерегулярный'),
     ]
 
 
     type_tr = forms.ChoiceField(choices=TYPE_CHOICES)
     # time = forms.DateTimeField()
     category = forms.ChoiceField(choices=CATEGORY_CHOICES)
-    res_or_sen = forms.CharField(required="Все")
+    res_or_sen = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Все"}),
+    )
     regullar = forms.ChoiceField(choices=REGULLAR_CHOICES)
