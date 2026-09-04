@@ -170,5 +170,3 @@ class Transaction(models.Model):
                 tr = tr.filter(**{field: value})
 
         return tr.order_by('-time')
-
-

@@ -73,7 +73,7 @@ body {
 
 .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     overflow: hidden;
     margin-bottom: 24px;
     border-radius: 10px;
@@ -95,7 +95,8 @@ body {
 
 #tab-statistics:checked ~ .dashboard-shell .tabs label[for="tab-statistics"],
 #tab-transfers:checked ~ .dashboard-shell .tabs label[for="tab-transfers"],
-#tab-operations:checked ~ .dashboard-shell .tabs label[for="tab-operations"] {
+#tab-operations:checked ~ .dashboard-shell .tabs label[for="tab-operations"],
+#tab-analytics:checked ~ .dashboard-shell .tabs label[for="tab-analytics"] {
     background: #4f6500;
 }
 
@@ -105,7 +106,8 @@ body {
 
 #tab-statistics:checked ~ .dashboard-shell .panel--statistics,
 #tab-transfers:checked ~ .dashboard-shell .panel--transfers,
-#tab-operations:checked ~ .dashboard-shell .panel--operations {
+#tab-operations:checked ~ .dashboard-shell .panel--operations,
+#tab-analytics:checked ~ .dashboard-shell .panel--analytics {
     display: block;
 }
 
@@ -159,6 +161,9 @@ body {
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+        "chart categories"
+        "future recent";
     gap: 16px;
 }
 
@@ -166,8 +171,20 @@ body {
     padding: 24px;
 }
 
-.chart-card {
-    grid-row: span 2;
+.dashboard-grid__chart {
+    grid-area: chart;
+}
+
+.dashboard-grid__categories {
+    grid-area: categories;
+}
+
+.dashboard-grid__recent {
+    grid-area: recent;
+}
+
+.dashboard-grid__future {
+    grid-area: future;
 }
 
 .section-heading {
@@ -325,6 +342,219 @@ body {
 
 .category-list li + li {
     margin-top: 10px;
+}
+
+.compact-transactions {
+    display: grid;
+    gap: 10px;
+}
+
+.compact-transaction {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid #e8f5d0;
+    border-radius: 8px;
+    background: #fbfff2;
+}
+
+.compact-transaction__name,
+.compact-transaction__details {
+    display: grid;
+    gap: 4px;
+}
+
+.compact-transaction__name span,
+.compact-transaction__details time,
+.compact-transaction__details span {
+    color: #63704d;
+    font-size: 12px;
+}
+
+.compact-transaction__details {
+    justify-items: end;
+    text-align: right;
+}
+
+.regular-transactions .compact-transaction ~ .regular-transactions__empty {
+    display: none;
+}
+
+.analytics-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px;
+    border-radius: 12px;
+    background: #18210a;
+    color: #fff;
+}
+
+.analytics-header > div > span {
+    color: #d2fa3e;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.analytics-header h2 {
+    margin: 5px 0 0;
+    font-size: 25px;
+}
+
+.month-navigation {
+    display: grid;
+    grid-template-columns: 42px minmax(160px, auto) 42px;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #4f6500;
+    border-radius: 9px;
+    background: #fff;
+    color: #18210a;
+    text-align: center;
+}
+
+.month-navigation a {
+    display: grid;
+    min-height: 42px;
+    place-items: center;
+    color: #18210a;
+    font-size: 21px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.month-navigation a:hover {
+    background: #e8f5d0;
+}
+
+.month-navigation strong {
+    padding: 0 12px;
+    font-size: 14px;
+}
+
+.analytics-donut-card,
+.monthly-chart-card {
+    margin-top: 16px;
+}
+
+.analytics-expense-chart {
+    grid-template-columns: minmax(240px, 0.75fr) minmax(280px, 1.25fr);
+}
+
+.analytics-donut {
+    width: min(100%, 250px);
+}
+
+.monthly-chart-heading {
+    align-items: center;
+}
+
+.chart-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px 18px;
+}
+
+.chart-metric {
+    position: relative;
+    padding-left: 17px;
+    color: #384524 !important;
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+.chart-metric::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+}
+
+.chart-metric--income::before {
+    background: #4f6500;
+}
+
+.chart-metric--expense::before {
+    background: #d14343;
+}
+
+.line-chart-scroll {
+    overflow-x: auto;
+    padding: 8px 0 2px;
+}
+
+.line-chart {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+}
+
+.line-chart__grid {
+    stroke: #dfe9c8;
+    stroke-width: 1;
+}
+
+.line-chart__axis-label,
+.line-chart__day-label {
+    fill: #63704d;
+    font-family: "Segoe UI", Tahoma, Verdana, sans-serif;
+    font-size: 12px;
+}
+
+.line-chart__axis-label {
+    text-anchor: end;
+    dominant-baseline: middle;
+}
+
+.line-chart__day-label {
+    text-anchor: middle;
+}
+
+.line-chart__series {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+}
+
+.line-chart__series--income {
+    stroke: #4f6500;
+}
+
+.line-chart__series--expense {
+    stroke: #d14343;
+}
+
+.line-chart__point {
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+.line-chart__point--income {
+    fill: #4f6500;
+}
+
+.line-chart__point--expense {
+    fill: #d14343;
+}
+
+.chart-help {
+    margin: 5px 0 0;
+    color: #63704d;
+    font-size: 12px;
+    text-align: center;
 }
 
 .form-card,
@@ -508,13 +738,40 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .dashboard-grid {
+        grid-template-areas:
+            "chart"
+            "categories"
+            "recent"
+            "future";
+    }
+
     .filter-button,
     .reset-button {
         grid-column: auto;
     }
 
-    .chart-card {
-        grid-row: auto;
+    .analytics-header,
+    .monthly-chart-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .month-navigation {
+        width: 100%;
+        grid-template-columns: 42px 1fr 42px;
+    }
+
+    .analytics-expense-chart {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-metrics {
+        justify-content: flex-start;
+    }
+
+    .compact-transaction {
+        align-items: flex-start;
     }
 
     .chart-card .section-heading,

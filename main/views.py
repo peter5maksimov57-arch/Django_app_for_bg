@@ -2,6 +2,9 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
+from django.utils import timezone
+from calendar import monthrange
+from datetime import date
 from main import forms
 from main import models
 from main import mail
@@ -92,7 +95,6 @@ def main_page(request):
         
             all_transactions = models.Transaction.all_transactions(user.id, filters)
 
-
     income = models.Transaction.all_typeTr_for_month(user.id, 'Поступление')
     outcome = models.Transaction.all_typeTr_for_month(user.id, 'Трата')
 
@@ -124,6 +126,113 @@ def main_page(request):
         if chart_segments else '#e8f5d0'
     )
 
+    # Данные для вкладки общей статистики за выбранный месяц.
+    try:
+        selected_year, selected_month = map(
+            int, request.GET.get('month', '').split('-', 1)
+        )
+        selected_date = date(selected_year, selected_month, 1)
+    except (TypeError, ValueError):
+        today = timezone.localdate()
+        selected_date = date(today.year, today.month, 1)
+
+    month_transactions = models.Transaction.objects.filter(
+        user_id=user.id,
+        time__year=selected_date.year,
+        time__month=selected_date.month,
+    )
+    days_in_month = monthrange(selected_date.year, selected_date.month)[1]
+    daily_income = [0.0] * days_in_month
+    daily_expenses = [0.0] * days_in_month
+    month_categories = {}
+
+    for transaction in month_transactions:
+        transaction_time = transaction.time
+        if timezone.is_aware(transaction_time):
+            transaction_time = timezone.localtime(transaction_time)
+        day_index = transaction_time.day - 1
+
+        if transaction.type_tr == 'Трата':
+            daily_expenses[day_index] += transaction.amount
+            month_categories[transaction.category] = (
+                month_categories.get(transaction.category, 0) + transaction.amount
+            )
+        elif transaction.type_tr == 'Поступление':
+            daily_income[day_index] += transaction.amount
+
+    analytics_income = sum(daily_income)
+    analytics_expenses = sum(daily_expenses)
+    month_categories = sorted(
+        month_categories.items(), key=lambda item: item[1], reverse=True
+    )
+
+    analytics_expense_chart = []
+    analytics_segments = []
+    analytics_position = 0
+    if analytics_expenses > 0:
+        for index, (category, amount) in enumerate(month_categories):
+            segment_end = analytics_position + amount / analytics_expenses * 100
+            color = chart_colors[index % len(chart_colors)]
+            analytics_segments.append(
+                f'{color} {analytics_position:.2f}% {segment_end:.2f}%'
+            )
+            analytics_expense_chart.append({
+                'category': category,
+                'amount': amount,
+                'color': color,
+            })
+            analytics_position = segment_end
+
+    analytics_expense_gradient = (
+        f"conic-gradient({', '.join(analytics_segments)})"
+        if analytics_segments else '#e8f5d0'
+    )
+
+    plot_left, plot_right = 58, 950
+    plot_top, plot_bottom = 24, 292
+    chart_maximum = max(daily_income + daily_expenses + [1])
+
+    def build_points(values):
+        points = []
+        for index, amount in enumerate(values):
+            x = plot_left + index * (plot_right - plot_left) / max(days_in_month - 1, 1)
+            y = plot_bottom - amount / chart_maximum * (plot_bottom - plot_top)
+            points.append({
+                'x': f'{x:.1f}',
+                'y': f'{y:.1f}',
+                'day': index + 1,
+                'amount': amount,
+            })
+        return points
+
+    income_points = build_points(daily_income)
+    expense_points = build_points(daily_expenses)
+    y_ticks = [
+        {
+            'y': f'{plot_bottom - ratio * (plot_bottom - plot_top):.1f}',
+            'amount': chart_maximum * ratio,
+        }
+        for ratio in (0, 0.25, 0.5, 0.75, 1)
+    ]
+    x_ticks = [
+        point for point in income_points
+        if point['day'] == 1
+        or point['day'] == days_in_month
+        or point['day'] % 5 == 0
+    ]
+
+    month_number = selected_date.year * 12 + selected_date.month - 1
+    previous_number = month_number - 1
+    next_number = month_number + 1
+    previous_month = date(
+        previous_number // 12, previous_number % 12 + 1, 1
+    )
+    next_month = date(next_number // 12, next_number % 12 + 1, 1)
+    month_names = (
+        'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+        'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
+    )
+
     last_tr = models.Transaction.last_transaction(user.id)
 
     future_tr = models.Transaction.future_transaction(user.id)
@@ -144,7 +253,20 @@ def main_page(request):
                                         "expense_chart": expense_chart,
                                         "expense_chart_gradient": expense_chart_gradient,
                                         "last_tr": last_tr[:3],
-                                        "future_tr": future_tr})
+                                        "future_tr": future_tr,
+                                        "analytics_month_label": f"{month_names[selected_date.month - 1]} {selected_date.year}",
+                                        "analytics_previous_month": previous_month.strftime('%Y-%m'),
+                                        "analytics_next_month": next_month.strftime('%Y-%m'),
+                                        "analytics_income": analytics_income,
+                                        "analytics_expenses": analytics_expenses,
+                                        "analytics_expense_chart": analytics_expense_chart,
+                                        "analytics_expense_gradient": analytics_expense_gradient,
+                                        "analytics_income_points": income_points,
+                                        "analytics_expense_points": expense_points,
+                                        "analytics_income_polyline": ' '.join(f"{point['x']},{point['y']}" for point in income_points),
+                                        "analytics_expense_polyline": ' '.join(f"{point['x']},{point['y']}" for point in expense_points),
+                                        "analytics_y_ticks": y_ticks,
+                                        "analytics_x_ticks": x_ticks})
 
 
 def registration(request):
@@ -427,4 +549,3 @@ def logout_view(request):
 #             }) 
 #     else:
 #         return redirect('main_page')
-

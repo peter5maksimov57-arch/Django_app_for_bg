@@ -5,12 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление бюджетом</title>
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260904-4">
 </head>
 <body>
-    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" {% if request.method != "POST" or request.POST.refresh_chart %}checked{% endif %}>
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" {% if request.GET.tab != "analytics" %}{% if request.method != "POST" or request.POST.refresh_chart %}checked{% endif %}{% endif %}>
     <input class="tab-control" type="radio" name="dashboard-tab" id="tab-transfers">
     <input class="tab-control" type="radio" name="dashboard-tab" id="tab-operations" {% if request.method == "POST" and not request.POST.refresh_chart %}checked{% endif %}>
+    <input class="tab-control" type="radio" name="dashboard-tab" id="tab-analytics" {% if request.GET.tab == "analytics" %}checked{% endif %}>
 
     <div class="dashboard-shell">
         <header class="dashboard-header">
@@ -25,6 +26,7 @@
             <label for="tab-statistics">Статистика</label>
             <label for="tab-transfers">Переводы</label>
             <label for="tab-operations">Все операции</label>
+            <label for="tab-analytics">Общая статистика</label>
         </nav>
 
         <main class="dashboard-content">
@@ -46,7 +48,7 @@
                 </div>
 
                 <div class="dashboard-grid">
-                    <article class="content-card chart-card">
+                    <article class="content-card chart-card dashboard-grid__chart">
                         <div class="section-heading">
                             <div>
                                 <span>Расходы</span>
@@ -97,7 +99,7 @@
                         </div>
                     </article>
 
-                    <article class="content-card">
+                    <article class="content-card dashboard-grid__categories">
                         <div class="section-heading">
                             <div>
                                 <span>Расходы</span>
@@ -120,24 +122,84 @@
                         </div>
                     </article>
 
-                    <article class="content-card">
+                    <article class="content-card dashboard-grid__recent">
                         <div class="section-heading">
                             <div>
                                 <span>История</span>
                                 <h2>Последние операции</h2>
                             </div>
                         </div>
-                        <div class="empty-state">Операции ещё не добавлены</div>
+                        {% if request.method == "POST" and not request.POST.refresh_chart %}
+                            {% with recent_transactions=all_transactions|slice:":3" %}
+                                {% if recent_transactions %}
+                                    <div class="compact-transactions">
+                                        {% for transaction in recent_transactions %}
+                                            <div class="compact-transaction">
+                                                <div class="compact-transaction__name">
+                                                    <strong>{{ transaction.category }}</strong>
+                                                    <span>{{ transaction.res_or_sen }}</span>
+                                                </div>
+                                                <div class="compact-transaction__details">
+                                                    <strong class="{% if transaction.type_tr == 'Трата' %}operation-row__amount--expense{% else %}operation-row__amount--income{% endif %}">
+                                                        {% if transaction.type_tr == 'Трата' %}−{% else %}+{% endif %}{{ transaction.amount|floatformat:2 }} ₽
+                                                    </strong>
+                                                    <time datetime="{{ transaction.time|date:'c' }}">{{ transaction.time|date:"d.m.Y H:i" }}</time>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="empty-state">Операции ещё не добавлены</div>
+                                {% endif %}
+                            {% endwith %}
+                        {% elif last_tr %}
+                            <div class="compact-transactions">
+                                {% for transaction in last_tr %}
+                                    <div class="compact-transaction">
+                                        <div class="compact-transaction__name">
+                                            <strong>{{ transaction.category }}</strong>
+                                            <span>{{ transaction.res_or_sen }}</span>
+                                        </div>
+                                        <div class="compact-transaction__details">
+                                            <strong class="{% if transaction.type_tr == 'Трата' %}operation-row__amount--expense{% else %}operation-row__amount--income{% endif %}">
+                                                {% if transaction.type_tr == 'Трата' %}−{% else %}+{% endif %}{{ transaction.amount|floatformat:2 }} ₽
+                                            </strong>
+                                            <time datetime="{{ transaction.time|date:'c' }}">{{ transaction.time|date:"d.m.Y H:i" }}</time>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">Операции ещё не добавлены</div>
+                        {% endif %}
                     </article>
 
-                    <article class="content-card">
+                    <article class="content-card dashboard-grid__future">
                         <div class="section-heading">
                             <div>
                                 <span>Планирование</span>
                                 <h2>Предстоящие платежи</h2>
                             </div>
                         </div>
-                        <div class="empty-state">Нет предстоящих платежей</div>
+                        <div class="compact-transactions regular-transactions">
+                            {% for transaction in all_transactions %}
+                                {% if transaction.regullar %}
+                                    <div class="compact-transaction">
+                                        <div class="compact-transaction__name">
+                                            <strong>{{ transaction.category }}</strong>
+                                            <span>{{ transaction.res_or_sen }}</span>
+                                        </div>
+                                        <div class="compact-transaction__details">
+                                            <strong class="{% if transaction.type_tr == 'Трата' %}operation-row__amount--expense{% else %}operation-row__amount--income{% endif %}">
+                                                {% if transaction.type_tr == 'Трата' %}−{% else %}+{% endif %}{{ transaction.amount|floatformat:2 }} ₽
+                                            </strong>
+                                            <span>Регулярный</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <div class="empty-state regular-transactions__empty">Нет регулярных платежей</div>
+                        </div>
                     </article>
                 </div>
             </section>
@@ -243,6 +305,98 @@
                     </div>
                 </article>
             </section>
+
+            <section class="tab-panel panel--analytics">
+                <div class="analytics-header">
+                    <div>
+                        <span>Общая статистика аккаунта</span>
+                        <h2>{{ analytics_month_label|capfirst }}</h2>
+                    </div>
+                    <nav class="month-navigation" aria-label="Выбор месяца">
+                        <a href="?tab=analytics&amp;month={{ analytics_previous_month }}" aria-label="Предыдущий месяц">←</a>
+                        <strong>{{ analytics_month_label|capfirst }}</strong>
+                        <a href="?tab=analytics&amp;month={{ analytics_next_month }}" aria-label="Следующий месяц">→</a>
+                    </nav>
+                </div>
+
+                <article class="content-card analytics-donut-card">
+                    <div class="section-heading">
+                        <div>
+                            <span>Расходы</span>
+                            <h2>Расходы по категориям</h2>
+                        </div>
+                        <span class="period-badge">{{ analytics_month_label|capfirst }}</span>
+                    </div>
+
+                    <div class="expense-chart analytics-expense-chart">
+                        <div
+                            class="donut-chart analytics-donut"
+                            role="img"
+                            aria-label="Расходы за {{ analytics_month_label }}: {{ analytics_expenses|floatformat:2 }} рублей"
+                            style="background: {{ analytics_expense_gradient }};"
+                        >
+                            <div class="donut-chart__center">
+                                <span>Всего расходов</span>
+                                <strong>{{ analytics_expenses|floatformat:2 }} ₽</strong>
+                            </div>
+                        </div>
+
+                        <div class="expense-legend">
+                            {% for item in analytics_expense_chart %}
+                                <div class="expense-legend__item">
+                                    <span class="expense-legend__color" style="background-color: {{ item.color }};"></span>
+                                    <span>{{ item.category }}</span>
+                                    <span class="expense-legend__value">{{ item.amount|floatformat:2 }} ₽</span>
+                                </div>
+                            {% empty %}
+                                <p class="expense-chart__empty">В выбранном месяце расходов пока нет</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </article>
+
+                <article class="content-card monthly-chart-card">
+                    <div class="section-heading monthly-chart-heading">
+                        <div>
+                            <span>Движение средств по дням</span>
+                            <h2>Доходы и расходы за месяц</h2>
+                        </div>
+                        <div class="chart-metrics" aria-label="Обозначения графика">
+                            <span class="chart-metric chart-metric--income">Доходы: {{ analytics_income|floatformat:2 }} ₽</span>
+                            <span class="chart-metric chart-metric--expense">Расходы: {{ analytics_expenses|floatformat:2 }} ₽</span>
+                        </div>
+                    </div>
+
+                    <div class="line-chart-scroll">
+                        <svg class="line-chart" viewBox="0 0 1000 340" role="img" aria-label="График доходов и расходов за {{ analytics_month_label }}">
+                            {% for tick in analytics_y_ticks %}
+                                <line class="line-chart__grid" x1="58" y1="{{ tick.y }}" x2="950" y2="{{ tick.y }}"></line>
+                                <text class="line-chart__axis-label" x="50" y="{{ tick.y }}">{{ tick.amount|floatformat:0 }}</text>
+                            {% endfor %}
+
+                            {% for tick in analytics_x_ticks %}
+                                <text class="line-chart__day-label" x="{{ tick.x }}" y="320">{{ tick.day }}</text>
+                            {% endfor %}
+
+                            <polyline class="line-chart__series line-chart__series--income" points="{{ analytics_income_polyline }}"></polyline>
+                            <polyline class="line-chart__series line-chart__series--expense" points="{{ analytics_expense_polyline }}"></polyline>
+
+                            {% for point in analytics_income_points %}
+                                <circle class="line-chart__point line-chart__point--income" cx="{{ point.x }}" cy="{{ point.y }}" r="4">
+                                    <title>{{ point.day }} число: доходы {{ point.amount|floatformat:2 }} ₽</title>
+                                </circle>
+                            {% endfor %}
+                            {% for point in analytics_expense_points %}
+                                <circle class="line-chart__point line-chart__point--expense" cx="{{ point.x }}" cy="{{ point.y }}" r="4">
+                                    <title>{{ point.day }} число: расходы {{ point.amount|floatformat:2 }} ₽</title>
+                                </circle>
+                            {% endfor %}
+                        </svg>
+                    </div>
+                    <p class="chart-help">Наведите указатель на точку, чтобы увидеть сумму за день.</p>
+                </article>
+            </section>
+
         </main>
     </div>
 </body>
