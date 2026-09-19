@@ -170,3 +170,115 @@ class Transaction(models.Model):
                 tr = tr.filter(**{field: value})
 
         return tr.order_by('-time')
+
+
+class Dependence(models.Model):
+    user_id_admin = models.IntegerField()
+    user_id_sub = models.IntegerField()
+
+
+    def __str__(self):
+        return f'{self.user_id_sub} привязан к {self.user_id_admin}'
+
+
+    @staticmethod
+    def add_dependence(admin_id, sub_id):
+        new_dependence = Dependence(user_id_admin=admin_id, user_id_sub=sub_id)
+        user_admin = Person.objects.get(user_id=admin_id)
+        user_sub = Person.objects.get(user_id=sub_id)
+
+        if user_admin.role == "":
+            user_admin.role = "Admin"
+        elif user_admin.role == "Subordinate":
+            user_admin.role = "Subordinate/Admin"
+
+        if user_sub.role == "":
+            user_admin.role = "Subordinate"
+        elif user_admin.role == "Admin":
+            user_admin.role = "Subordinate/Admin"
+
+        user_admin.save()
+        user_sub.save()
+
+        new_dependence.save()
+        return new_dependence
+
+
+    @staticmethod
+    def all_adminrole_dependences(user_id):
+        admin_role = Dependence.objects.filter(user_id_admin=user_id)
+
+        list_of_sub = []
+
+        for dep in admin_role:
+            user = Person.objects.get(user_id=dep.user_id_sub)
+            list_of_sub.append([user.name, user.id])
+
+        return list_of_sub
+
+
+
+    @staticmethod
+    def all_subrole_dependences(user_id):
+        sub_role = Dependence.objects.filter(user_id_sub=user_id)
+    
+        list_of_admin = []
+    
+        for dep in sub_role:
+            user = Person.objects.get(user_id=dep.user_id_sub)
+            list_of_admin.append([user.name, user.id])
+    
+        return list_of_admin
+
+
+
+    @staticmethod
+    def delete_dependence(admin_id, sub_id):
+        dependence = Dependence.objects.get(
+            user_id_admin=admin_id,
+            user_id_sub=sub_id
+        )
+        
+        admin_user = Person.objects.get(id=admin_id)
+        sub_user = Person.objects.get(id=sub_id)
+        
+        dependence.delete()
+        
+        remaining_subs = Dependence.objects.filter(user_id_admin=admin_id).count()
+        
+        is_sub = Dependence.objects.filter(user_id_sub=admin_id).exists()
+        
+        if remaining_subs == 0 and not is_sub:
+            admin_user.role = ""
+        elif remaining_subs > 0 and is_sub:
+            admin_user.role = "Subordinate/Admin"
+        elif remaining_subs > 0 and not is_sub:
+            admin_user.role = "Admin"
+        elif remaining_subs == 0 and is_sub:
+            admin_user.role = "Subordinate"
+        
+        admin_user.save()
+        
+        remaining_admins = Dependence.objects.filter(user_id_sub=sub_id).count()
+        
+        has_subs = Dependence.objects.filter(user_id_admin=sub_id).exists()
+        
+        if remaining_admins == 0 and not has_subs:
+            sub_user.role = ""
+        elif remaining_admins > 0 and has_subs:
+            sub_user.role = "Subordinate/Admin"
+        elif remaining_admins > 0 and not has_subs:
+            sub_user.role = "Subordinate"
+        elif remaining_admins == 0 and has_subs:
+            sub_user.role = "Admin"
+        
+        sub_user.save()
+        
+        return True
+
+
+
+
+    
+
+
