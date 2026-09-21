@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание семьи — Управление бюджетом</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-invite">
+</head>
+<body>
+    <div class="dashboard-shell">
+        <header class="dashboard-header">
+            <div>
+                <p class="dashboard-header__eyebrow">Управление бюджетом</p>
+                <h1>{{ account_user.name }}</h1>
+            </div>
+            <div class="dashboard-header__actions">
+                <a href="{% url 'family' %}" class="family-link">Вернуться к семье</a>
+                <a href="{% url 'logout' %}" class="logout-link">Выйти</a>
+            </div>
+        </header>
+
+        <main class="family-page" aria-labelledby="create-family-title">
+            <div class="family-page__heading">
+                <p class="dashboard-header__eyebrow">Пригласите близкого человека</p>
+                <h2 id="create-family-title">Создание семьи</h2>
+            </div>
+            <section class="content-card family-card">
+                <p class="family-invite-intro">
+                    Если вы хотите создать семью, введите почту получателя,
+                    который станет её участником.
+                </p>
+                <p class="family-card__hint">
+                    Получатель должен быть зарегистрирован в приложении.
+                    Если он согласен вступить в семью, попросите его передать код из письма
+                    и введите его ниже. Вы станете администратором и сможете
+                    просматривать его баланс и операции.
+                </p>
+
+                <form class="family-invite-form" method="post" action="{% url 'family_create' %}">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="family-form-errors" role="alert">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="family-invite-step">
+                        <label for="{{ form.email.id_for_label }}">Почта получателя</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="family-form-errors" role="alert">{{ form.email.errors }}</div>
+                        {% endif %}
+                        <button class="family-link" type="submit" name="action" value="send" formnovalidate>
+                            {% if invitation_email %}Отправить код повторно{% else %}Отправить приглашение{% endif %}
+                        </button>
+                    </div>
+
+                    {% if notice %}
+                        <p class="family-invite-notice" role="status">{{ notice }}</p>
+                    {% elif invitation_email %}
+                        <p class="family-invite-notice">Приглашение отправлено на {{ invitation_email }}. Введите код из письма.</p>
+                    {% endif %}
+
+                    <div class="family-invite-step">
+                        <label for="{{ form.code.id_for_label }}">Код из письма получателя</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                            <div class="family-form-errors" role="alert">{{ form.code.errors }}</div>
+                        {% endif %}
+                        <span class="family-card__hint">Шесть цифр. Код действует 10 минут.</span>
+                        <button class="family-link" type="submit" name="action" value="confirm">Подтвердить и создать семью</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

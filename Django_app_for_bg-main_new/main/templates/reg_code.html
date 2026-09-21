@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение кода — Управление бюджетом</title>
+    <link rel="stylesheet" href="{% static 'auth.css' %}">
+</head>
+<body>
+    <main class="auth-card">
+        <h1 class="auth-card__title">Подтверждение</h1>
+        <p class="auth-card__subtitle">
+            Введите шестизначный код, отправленный на вашу почту
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row form-row--code">
+                <label for="{{ form.us_code.id_for_label }}">
+                    Код подтверждения
+                </label>
+                {{ form.us_code }}
+            </div>
+
+            {% include "form_errors.html" %}
+
+            <button class="submit-button" type="submit">Подтвердить</button>
+        </form>
+
+        <nav class="auth-card__switch" aria-label="Возврат назад">
+            {% if request.resolver_match.url_name == "res_code" %}
+                <a href="{% url 'password_reset' %}">
+                    ← Вернуться к сбросу пароля
+                </a>
+            {% else %}
+                <a href="{% url 'registration' %}">
+                    ← Вернуться к регистрации
+                </a>
+            {% endif %}
+        </nav>
+    </main>
+
+</body>
+</html>
