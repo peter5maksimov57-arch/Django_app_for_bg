@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление бюджетом</title>
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-invite">
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-manage">
 </head>
 <body>
     <input class="tab-control" type="radio" name="dashboard-tab" id="tab-statistics" {% if request.GET.tab != "analytics" %}{% if request.method != "POST" or request.POST.refresh_chart %}checked{% endif %}{% endif %}>

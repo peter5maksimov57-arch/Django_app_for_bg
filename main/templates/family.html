@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Семья — Управление бюджетом</title>
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-invite">
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-manage">
 </head>
 <body>
     <div class="dashboard-shell">
@@ -25,6 +25,10 @@
                 <p class="dashboard-header__eyebrow">Ваша семья</p>
                 <h2 id="family-title">Семья</h2>
             </div>
+
+            {% for message in messages %}
+                <p class="family-invite-notice family-feedback" role="status">{{ message }}</p>
+            {% endfor %}
 
             {% for group in family_groups %}
                 <section class="content-card family-card" aria-label="Семья: администратор {{ group.admin.name }}">
@@ -65,16 +69,40 @@
                                 {% if member.id == account_user.id %}
                                     <span class="family-member__you">Вы</span>
                                 {% endif %}
+                                {% if group.can_view %}
+                                    <details class="family-remove">
+                                        <summary>Удалить</summary>
+                                        <form method="post" action="{% url 'family_remove' member.id %}">
+                                            {% csrf_token %}
+                                            <p>Удалить участника «{{ member.name }}» из семьи? Профиль и операции сохранятся.</p>
+                                            <button type="submit" class="family-danger-button">Подтвердить удаление</button>
+                                        </form>
+                                    </details>
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ol>
+                    <div class="family-management">
+                        {% if group.can_view %}
+                            <a href="{% url 'family_create' %}" class="family-link">Пригласить участника</a>
+                        {% else %}
+                            <details class="family-leave">
+                                <summary>Выйти из семьи</summary>
+                                <form method="post" action="{% url 'family_leave' group.admin.id %}">
+                                    {% csrf_token %}
+                                    <p>После выхода администратор этой семьи потеряет доступ к вашей статистике.</p>
+                                    <button type="submit" class="family-danger-button">Подтвердить выход</button>
+                                </form>
+                            </details>
+                        {% endif %}
+                    </div>
                 </section>
             {% empty %}
                 <section class="content-card family-card">
                     <div class="empty-state">Вы пока не состоите в семье.</div>
                 </section>
             {% endfor %}
-            {% if not family_groups %}
+            {% if can_create_family %}
                 <div class="family-create-action">
                     <a href="{% url 'family_create' %}" class="family-link">Создать семью</a>
                 </div>

@@ -37,11 +37,16 @@ class FamilyInvitationTests(TestCase):
             'action': 'confirm', 'email': email or self.member.email, 'code': code,
         })
 
-    def test_empty_family_offers_creation_and_both_fields(self):
+    def test_first_family_shows_code_only_after_invitation(self):
         self.assertContains(self.client.get(reverse('family')), 'Создать семью')
         response = self.client.get(self.url)
         self.assertContains(response, 'name="email"')
+        self.assertNotContains(response, 'name="code"')
+        self.assertNotContains(response, 'value="confirm"')
+        self.invite()
+        response = self.client.get(self.url)
         self.assertContains(response, 'name="code"')
+        self.assertContains(response, 'Подтвердить и создать семью')
 
     def test_invitation_requires_consent_before_granting_access(self):
         code = self.invite()
@@ -123,6 +128,7 @@ class FamilyInvitationTests(TestCase):
         with patch('main.mail.send_family_code', side_effect=OSError('SMTP unavailable')):
             response = self.client.post(self.url, {'action': 'send', 'email': self.member.email})
         self.assertContains(response, 'Не удалось отправить письмо')
+        self.assertNotContains(response, 'name="code"')
         self.assertNotIn('family_invitation', self.client.session)
         self.assertFalse(Dependence.objects.exists())
 
@@ -133,12 +139,32 @@ class FamilyInvitationTests(TestCase):
         self.assertContains(self.confirm(code), 'уже состоит')
         self.assertEqual(Dependence.objects.count(), 1)
 
-    def test_existing_admin_retains_role_when_accepting_invitation(self):
+    def test_existing_admin_can_join_while_retaining_own_family_rights(self):
         third = self.person('Ребёнок', 'child@example.com')
         Dependence.add_dependence(self.member.id, third.id)
-        self.confirm(self.invite())
+        code = self.invite()
+        self.assertFalse(Dependence.objects.filter(user_id_admin=self.admin.id).exists())
+        self.assertRedirects(self.confirm(code), reverse('family'))
+        self.assertEqual(len(mail.outbox), 1)
         self.member.refresh_from_db()
         self.assertEqual(self.member.role, 'Subordinate/Admin')
+        # Доступ не распространяется на участников чужой семьи.
+        self.assertEqual(self.client.get(reverse('family_member', args=[third.id])).status_code, 403)
+        self.assertEqual(self.client.get(reverse('family_member', args=[self.member.id])).status_code, 200)
+        self.login_as(self.member)
+        response = self.client.get(reverse('family'))
+        self.assertEqual(
+            {group['admin'].id: group['can_view'] for group in response.context['family_groups']},
+            {self.admin.id: False, self.member.id: True},
+        )
+        self.assertEqual(self.client.get(reverse('family_member', args=[third.id])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('family_member', args=[self.admin.id])).status_code, 403)
+        self.assertEqual(self.client.get(self.url).status_code, 200)
+        self.assertRedirects(self.client.post(reverse('family_leave', args=[self.admin.id])), reverse('family'))
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.role, 'Admin')
+        self.assertTrue(Dependence.objects.filter(user_id_admin=self.member.id, user_id_sub=third.id).exists())
+        self.assertFalse(Dependence.objects.filter(user_id_admin=self.admin.id).exists())
 
     def test_session_required_for_get_and_post(self):
         self.client.session.flush()

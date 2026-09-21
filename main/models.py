@@ -235,7 +235,7 @@ class Dependence(models.Model):
 
     @staticmethod
     def delete_dependence(admin_id, sub_id):
-        dependence = Dependence.objects.get(
+        dependence = Dependence.objects.filter(
             user_id_admin=admin_id,
             user_id_sub=sub_id
         )
@@ -281,4 +281,3 @@ class Dependence(models.Model):
 
 
     
-

@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание семьи — Управление бюджетом</title>
-    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-invite">
+    <title>{% if is_family_admin %}Приглашение участника{% else %}Создание семьи{% endif %} — Управление бюджетом</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}?v=20260921-family-manage">
 </head>
 <body>
     <div class="dashboard-shell">
@@ -23,17 +23,22 @@
         <main class="family-page" aria-labelledby="create-family-title">
             <div class="family-page__heading">
                 <p class="dashboard-header__eyebrow">Пригласите близкого человека</p>
-                <h2 id="create-family-title">Создание семьи</h2>
+                <h2 id="create-family-title">{% if is_family_admin %}Приглашение участника{% else %}Создание семьи{% endif %}</h2>
             </div>
             <section class="content-card family-card">
                 <p class="family-invite-intro">
+                    {% if is_family_admin %}
+                    Введите почту пользователя, которого хотите пригласить в свою семью.
+                    {% else %}
                     Если вы хотите создать семью, введите почту получателя,
                     который станет её участником.
+                    {% endif %}
                 </p>
                 <p class="family-card__hint">
                     Получатель должен быть зарегистрирован в приложении.
+                    После отправки приглашения появится поле для кода.
                     Если он согласен вступить в семью, попросите его передать код из письма
-                    и введите его ниже. Вы станете администратором и сможете
+                    и введите его ниже. {% if is_family_admin %}Как администратор вы сможете{% else %}Вы станете администратором и сможете{% endif %}
                     просматривать его баланс и операции.
                 </p>
 
@@ -60,6 +65,7 @@
                         <p class="family-invite-notice">Приглашение отправлено на {{ invitation_email }}. Введите код из письма.</p>
                     {% endif %}
 
+                    {% if invitation_email %}
                     <div class="family-invite-step">
                         <label for="{{ form.code.id_for_label }}">Код из письма получателя</label>
                         {{ form.code }}
@@ -67,8 +73,11 @@
                             <div class="family-form-errors" role="alert">{{ form.code.errors }}</div>
                         {% endif %}
                         <span class="family-card__hint">Шесть цифр. Код действует 10 минут.</span>
-                        <button class="family-link" type="submit" name="action" value="confirm">Подтвердить и создать семью</button>
+                        <button class="family-link" type="submit" name="action" value="confirm">{% if is_family_admin %}Подтвердить и добавить участника{% else %}Подтвердить и создать семью{% endif %}</button>
                     </div>
+                    {% elif form.code.errors %}
+                        <div class="family-form-errors" role="alert">{{ form.code.errors }}</div>
+                    {% endif %}
                 </form>
             </section>
         </main>

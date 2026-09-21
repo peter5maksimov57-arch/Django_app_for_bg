@@ -7,6 +7,7 @@ from django.db import transaction
 from smtplib import SMTPException
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from calendar import monthrange
 from datetime import date
 from main import forms
@@ -337,6 +338,7 @@ def family_page(request):
     return render(request, "family.html", {
         'account_user': account_user,
         'family_groups': family_groups,
+        'can_create_family': not any(group['can_view'] for group in family_groups),
     })
 
 
@@ -344,6 +346,8 @@ def family_create(request):
     account_user = models.Person.objects.filter(id=request.session.get('user_id')).first()
     if account_user is None:
         return main_page(request)
+
+    is_family_admin = models.Dependence.objects.filter(user_id_admin=account_user.id).exists()
 
     now = timezone.now().timestamp()
     invitation = request.session.get('family_invitation')
@@ -419,8 +423,37 @@ def family_create(request):
 
     return render(request, 'family_create.html', {
         'account_user': account_user, 'form': form, 'notice': notice,
+        'is_family_admin': is_family_admin,
         'invitation_email': invitation['email'] if invitation else '',
     })
+
+
+@require_POST
+def family_unlink(request, member_id=None, admin_id=None):
+    account_user = models.Person.objects.filter(id=request.session.get('user_id')).first()
+    if account_user is None:
+        return main_page(request)
+
+    leaving = member_id is None
+    if leaving:
+        member_id = account_user.id
+    else:
+        admin_id = account_user.id
+    # При удалении администратор берётся из сессии, при выходе - сам участник.
+    if admin_id == member_id or not models.Dependence.objects.filter(
+        user_id_admin=admin_id, user_id_sub=member_id
+    ).exists():
+        return render(request, 'status.html', {
+            'title': 'Действие недоступно',
+            'message': 'Нет прав на изменение этой семьи или участник уже вышел из неё.',
+            'button_text': 'Вернуться к семье', 'button_url': reverse('family'),
+        }, status=403)
+
+    with transaction.atomic():
+        models.Dependence.delete_dependence(admin_id, member_id)
+    request.session.pop('family_invitation', None)
+    messages.success(request, 'Вы вышли из семьи.' if leaving else 'Участник удалён из семьи.')
+    return redirect('family')
 
 
 def registration(request):
