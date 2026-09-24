@@ -8,10 +8,8 @@ from django.urls import reverse
 from main.models import Dependence, Person, Transaction
 
 
-@override_settings(
-    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
-    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
-)
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+
 class FamilyManagementTests(TestCase):
     def setUp(self):
         self.admin = self.person('Администратор')
@@ -23,10 +21,7 @@ class FamilyManagementTests(TestCase):
         self.login_as(self.admin)
 
     def person(self, name):
-        return Person.objects.create(
-            name=name, email=f'user{Person.objects.count()}@example.com',
-            password='', balance=100, role='',
-        )
+        return Person.objects.create(name=name, email=f'user{Person.objects.count()}@example.com', password='', balance=100, role='')
 
     def login_as(self, person, client=None):
         session = (client or self.client).session
@@ -72,10 +67,8 @@ class FamilyManagementTests(TestCase):
         self.assertEqual(self.member.role, 'Subordinate/Admin')
         self.assertTrue(Dependence.objects.filter(user_id_admin=self.admin.id, user_id_sub=self.member.id).exists())
         family = self.client.get(reverse('family'))
-        self.assertEqual(
-            {group['admin'].id: group['can_view'] for group in family.context['family_groups']},
-            {self.member.id: True, self.admin.id: False},
-        )
+        self.assertEqual({group['admin'].id: group['can_view'] for group in family.context['family_groups']}, {self.member.id: True, self.admin.id: False})
+        
         self.assertContains(family, 'Пригласить участника')
         self.assertNotContains(family, 'Создать семью')
         self.assertEqual(self.client.get(reverse('family_member', args=[self.outsider.id])).status_code, 200)
