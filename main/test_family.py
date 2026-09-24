@@ -11,8 +11,6 @@ from main.models import Dependence, Person, Transaction
 
 
 class ElementAttributes(HTMLParser):
-    """Collect real links/forms without relying on HTML whitespace."""
-
     def __init__(self, content, tag, attribute):
         super().__init__()
         self.tag = tag
@@ -42,40 +40,29 @@ class FamilyViewTests(TestCase):
                 role=role,
             )
 
-        # Relationships, rather than a possibly stale role string, grant access.
         cls.admin = person("Администратор", "admin@example.com", 9000)
         cls.member = person("Участник", "member@example.com", 4000)
         cls.sibling = person("Второй участник", "sibling@example.com", 2000)
         cls.outsider = person("Чужой админ", "outsider@example.com", role="Admin")
         cls.other_member = person("Чужой участник", "other@example.com")
+        
         Dependence.objects.create(user_id_admin=cls.admin.id, user_id_sub=cls.member.id)
         Dependence.objects.create(user_id_admin=cls.admin.id, user_id_sub=cls.sibling.id)
-        Dependence.objects.create(
-            user_id_admin=cls.outsider.id, user_id_sub=cls.other_member.id
-        )
+        Dependence.objects.create(user_id_admin=cls.outsider.id, user_id_sub=cls.other_member.id)
 
         cls.current_time = timezone.now().replace(day=15, hour=12, minute=0)
         cls.previous_time = cls.current_time.replace(day=1) - timedelta(days=1)
 
         def transaction(owner, amount, kind, category, label, *, old=False, regular=False):
-            return Transaction.objects.create(
-                user_id=owner.id,
-                amount=amount,
-                type_tr=kind,
-                category=category,
-                res_or_sen=label,
-                regullar=regular,
-                time=cls.previous_time if old else cls.current_time,
-            )
+            return Transaction.objects.create(user_id=owner.id, amount=amount, type_tr=kind, category=category,
+                res_or_sen=label, regullar=regular, time=cls.previous_time if old else cls.current_time,)
 
         transaction(cls.admin, 901, "Трата", "Продукты", "Секрет администратора")
         transaction(cls.admin, 1201, "Поступление", "Зарплата", "Работа администратора")
-        cls.member_expense = transaction(
-            cls.member, 100, "Трата", "Продукты", "Покупка участника"
-        )
-        cls.member_regular = transaction(
-            cls.member, 20, "Трата", "ЖКХ", "Подписка участника", regular=True
-        )
+        
+        cls.member_expense = transaction(cls.member, 100, "Трата", "Продукты", "Покупка участника")
+        cls.member_regular = transaction( cls.member, 20, "Трата", "ЖКХ", "Подписка участника", regular=True)
+        
         transaction(cls.member, 500, "Поступление", "Зарплата", "Работа участника")
         transaction(cls.member, 70, "Трата", "Развлечения", "Старый расход", old=True)
         transaction(cls.member, 200, "Поступление", "Зарплата", "Старый доход", old=True)
@@ -127,7 +114,7 @@ class FamilyViewTests(TestCase):
         self.assertNotContains(response, self.outsider.name)
         self.assertNotContains(response, self.other_member.name)
         html = response.content.decode()
-        self.assertRegex(html, "crown|♛|♕|👑")
+        self.assertRegex(html, "♕")
 
     def test_member_sees_family_without_dashboard_links(self):
         self.login_as(self.member)
@@ -144,9 +131,7 @@ class FamilyViewTests(TestCase):
         self.assertNotContains(response, self.other_member.name)
 
     def test_no_relationships_shows_empty_family_without_unrelated_profiles(self):
-        solo = Person.objects.create(
-            name="Один", email="solo@example.com", password="unused", balance=0, role="Admin"
-        )
+        solo = Person.objects.create(name="Один", email="solo@example.com", password="unused", balance=0, role="Admin")
         self.login_as(solo)
         response = self.client.get(reverse("family"))
 
@@ -156,9 +141,7 @@ class FamilyViewTests(TestCase):
         self.assertNotContains(response, self.member.name)
 
     def test_admin_and_subordinate_roles_are_scoped_to_each_family(self):
-        Dependence.objects.create(
-            user_id_admin=self.member.id, user_id_sub=self.other_member.id
-        )
+        Dependence.objects.create(user_id_admin=self.member.id, user_id_sub=self.other_member.id)
         self.login_as(self.member)
         response = self.client.get(reverse("family"))
 
@@ -199,10 +182,8 @@ class FamilyViewTests(TestCase):
     def test_refresh_and_filter_stay_on_selected_member_without_mutating_accounts(self):
         self.login_as(self.admin)
         count_before = Transaction.objects.count()
-        for payload in (
-            {"refresh_chart": "1"},
-            {"type_tr": "Трата", "category": "Продукты", "res_or_sen": "", "regullar": "Все"},
-        ):
+        for payload in ({"refresh_chart": "1"},
+            {"type_tr": "Трата", "category": "Продукты", "res_or_sen": "", "regullar": "Все"},):
             with self.subTest(payload=payload):
                 response = self.client.post(self.member_url(), payload)
                 self.assertEqual(response.status_code, 200)
@@ -221,23 +202,20 @@ class FamilyViewTests(TestCase):
 
     def test_month_navigation_keeps_member_and_uses_selected_month(self):
         self.login_as(self.admin)
-        response = self.client.get(
-            self.member_url(),
-            {"tab": "analytics", "month": self.previous_time.strftime("%Y-%m")},
-        )
+        response = self.client.get(self.member_url(),
+            {"tab": "analytics", "month": self.previous_time.strftime("%Y-%m")},)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["analytics_income"], 200)
         self.assertEqual(response.context["analytics_expenses"], 70)
         self.assertEqual(sum(p["amount"] for p in response.context["analytics_income_points"]), 200)
         self.assertEqual(sum(p["amount"] for p in response.context["analytics_expense_points"]), 70)
-        month_links = [
-            urlsplit(href) for href in self.attributes(response, "a", "href")
-            if "month" in parse_qs(urlsplit(href).query)
-        ]
+        
+        month_links = [urlsplit(href) for href in self.attributes(response, "a", "href")
+            if "month" in parse_qs(urlsplit(href).query)]
         self.assertGreaterEqual(len(month_links), 2)
+        
         for link in month_links:
-            # A query-only URL also retains the current member path.
             self.assertIn(link.path, ("", self.member_url()))
         self.assertEqual(self.client.session["user_id"], self.admin.id)
 
@@ -297,9 +275,7 @@ class FamilyViewTests(TestCase):
         self.assertNotIn("user_id", self.client.session)
 
     def test_wrong_password_cannot_authenticate_as_family_admin(self):
-        response = self.client.post(
-            "/", {"email": self.admin.email, "password": "wrong-password"}
-        )
+        response = self.client.post("/", {"email": self.admin.email, "password": "wrong-password"})
 
         self.assertContains(response, "Неверный пароль")
         self.assertNotIn("user_id", self.client.session)
