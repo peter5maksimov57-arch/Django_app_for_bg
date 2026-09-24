@@ -8,10 +8,8 @@ from django.urls import reverse
 from main.models import Dependence, Person
 
 
-@override_settings(
-    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
-    PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'],
-)
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+
 class FamilyInvitationTests(TestCase):
     def setUp(self):
         self.admin = self.person('Создатель', 'creator@example.com')
@@ -66,7 +64,7 @@ class FamilyInvitationTests(TestCase):
         self.assertNotIn('family_invitation', self.client.session)
         self.assertEqual(self.client.session['user_id'], self.admin.id)
         family = self.client.get(reverse('family'))
-        self.assertContains(family, '👑')
+        self.assertContains(family, '♕')
         self.assertContains(family, reverse('family_member', args=[self.member.id]))
         self.assertNotContains(family, 'Создать семью')
         self.assertEqual(self.client.get(reverse('family_member', args=[self.member.id])).status_code, 200)
@@ -148,15 +146,13 @@ class FamilyInvitationTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.member.refresh_from_db()
         self.assertEqual(self.member.role, 'Subordinate/Admin')
-        # Доступ не распространяется на участников чужой семьи.
+
         self.assertEqual(self.client.get(reverse('family_member', args=[third.id])).status_code, 403)
         self.assertEqual(self.client.get(reverse('family_member', args=[self.member.id])).status_code, 200)
         self.login_as(self.member)
         response = self.client.get(reverse('family'))
-        self.assertEqual(
-            {group['admin'].id: group['can_view'] for group in response.context['family_groups']},
-            {self.admin.id: False, self.member.id: True},
-        )
+        self.assertEqual({group['admin'].id: group['can_view'] for group in response.context['family_groups']}, {self.admin.id: False, self.member.id: True})
+        
         self.assertEqual(self.client.get(reverse('family_member', args=[third.id])).status_code, 200)
         self.assertEqual(self.client.get(reverse('family_member', args=[self.admin.id])).status_code, 403)
         self.assertEqual(self.client.get(self.url).status_code, 200)
